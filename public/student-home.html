@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Home</title>
+  <script src="student-home.js" defer></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .course-list {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .course-item {
+      background-color: #f4f4f4;
+      padding: 15px;
+      border: 1px solid #ddd;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+
+    .course-item:hover {
+      background-color: #eaeaea;
+    }
+
+    #courseDetailModal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+      display: none;
+      z-index: 10;
+    }
+
+    #courseDetailModal h3 {
+      margin-top: 0;
+    }
+
+    .modal-footer {
+      margin-top: 20px;
+      text-align: right;
+    }
+
+    .btn {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background-color: #3498db;
+      color: white;
+    }
+
+    .btn-secondary {
+      background-color: #ccc;
+    }
+
+    .btn-danger {
+      background-color: #e74c3c;
+      color: white;
+    }
+
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 5;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h2>Student Home</h2>
+    <h2> <span id="studentName">Đang tải...</span></h2>
+    <button onclick="logout()" class="btn btn-danger">Đăng xuất</button>
+  </header>
+  <h2>Tất cả khóa học</h2>
+  <main class="course-list" id="courseList">
+    <!-- Các khóa học sẽ được hiển thị tại đây -->
+  </main>
+
+  <section class="section">
+    <h3 class="status-header">Khóa học đã được duyệt</h3>
+    <div id="approvedCourses" class="course-list"></div>
+
+    <h3 class="status-header">Khóa học đang chờ duyệt</h3>
+    <div id="pendingCourses" class="course-list"></div>
+  </section>
+
+  <!-- Modal hiển thị thông tin khóa học -->
+  <div id="overlay"></div>
+  <div id="courseDetailModal">
+    <h3 id="courseTitle"></h3>
+    <p><strong>Mô tả:</strong> <span id="courseDescription"></span></p>
+    <p><strong>Giảng viên:</strong> <span id="courseTeacher"></span></p>
+    <p><strong>Thời gian:</strong> <span id="courseDuration"></span></p>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Đóng</button>
+      <button class="btn btn-primary" onclick="registerCourse()">Đăng ký khóa học</button>
+    </div>
+  </div>
+</body>
+
+</html>

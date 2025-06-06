@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin</title>
+    <script src="admin.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table, th, td { border: 1px solid #ccc; border-collapse: collapse; padding: 8px; }
+    th { background-color: #eee; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Trang Quản Trị Admin</h1>
+
+  <button onclick="fetchUsers()">Xem danh sách người dùng</button>
+  <button onclick="showCreateForm()">Tạo người dùng mới</button>
+  <button onclick="fetchCourses()">Xem danh sách khóa học</button>
+
+  <h2>Người dùng</h2>
+  <table id="userTable" class="hidden">
+    <thead>
+      <tr>
+        <th>Tên</th><th>Email</th><th>Vai trò</th><th>Hành động</th>
+      </tr>
+    </thead>
+    <tbody id="userTableBody"></tbody>
+  </table>
+
+  <div id="createUserForm" class="hidden">
+    <h3>Tạo người dùng mới</h3>
+    <input id="name" placeholder="Tên" />
+    <input id="email" placeholder="Email" />
+    <input id="password" placeholder="Mật khẩu" />
+    <select id="role">
+      <option value="student">Học viên</option>
+      <option value="teacher">Giảng viên</option>
+      <option value="admin">Admin</option>
+    </select>
+    <button onclick="createUser()">Tạo</button>
+  </div>
+
+  <h2>Khóa học</h2>
+  <ul id="courseList" class="hidden"></ul>
+</body>
+</html>
