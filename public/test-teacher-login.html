@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Kiểm Tra Đăng Nhập Giáo Viên</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      pre {
+        background-color: #f5f5f5;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      input {
+        padding: 8px;
+        width: 300px;
+      }
+      button {
+        padding: 8px 16px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      .result {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Kiểm Tra Đăng Nhập Giáo Viên</h1>
+
+    <div class="form-group">
+      <label for="email">Email:</label>
+      <input type="email" id="email" value="teacher@gmail.com" />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Mật khẩu:</label>
+      <input type="password" id="password" value="password" />
+    </div>
+
+    <button onclick="testLogin()">Đăng nhập</button>
+
+    <div class="result">
+      <h3>Kết quả:</h3>
+      <div id="status"></div>
+      <h4>1. Phản hồi từ API:</h4>
+      <pre id="apiResponse"></pre>
+      <h4>2. Thử tải thông tin người dùng:</h4>
+      <pre id="userInfo"></pre>
+      <h4>3. Thử tải khóa học của giáo viên:</h4>
+      <pre id="courses"></pre>
+    </div>
+
+    <script>
+      async function testLogin() {
+        // Reset kết quả
+        document.getElementById("status").textContent = "Đang kiểm tra...";
+        document.getElementById("apiResponse").textContent = "";
+        document.getElementById("userInfo").textContent = "";
+        document.getElementById("courses").textContent = "";
+
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        try {
+          // Bước 1: Thử đăng nhập
+          const loginResponse = await fetch("/users/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const loginResult = await loginResponse.json();
+          document.getElementById("apiResponse").textContent = JSON.stringify(
+            loginResult,
+            null,
+            2
+          );
+
+          if (!loginResponse.ok || !loginResult.token) {
+            document.getElementById("status").textContent =
+              "❌ Đăng nhập thất bại!";
+            return;
+          }
+
+          const token = loginResult.token;
+          localStorage.setItem("token", token);
+          document.getElementById("status").textContent =
+            "✅ Đăng nhập thành công! Đang kiểm tra các API khác...";
+
+          // Bước 2: Thử lấy thông tin người dùng
+          try {
+            const userResponse = await fetch("/users/me", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              document.getElementById("userInfo").textContent = JSON.stringify(
+                userData,
+                null,
+                2
+              );
+              document.getElementById("status").textContent +=
+                "\n✅ Lấy thông tin người dùng thành công!";
+            } else {
+              document.getElementById("userInfo").textContent =
+                "Lỗi: " + userResponse.status;
+              document.getElementById("status").textContent +=
+                "\n❌ Lấy thông tin người dùng thất bại!";
+            }
+          } catch (error) {
+            document.getElementById("userInfo").textContent =
+              "Lỗi: " + error.message;
+          }
+
+          // Bước 3: Thử lấy khóa học của giáo viên
+          try {
+            const coursesResponse = await fetch("/teachers/courses", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (coursesResponse.ok) {
+              const coursesData = await coursesResponse.json();
+              document.getElementById("courses").textContent = JSON.stringify(
+                coursesData,
+                null,
+                2
+              );
+              document.getElementById("status").textContent +=
+                "\n✅ Lấy danh sách khóa học thành công!";
+            } else {
+              document.getElementById("courses").textContent =
+                "Lỗi: " +
+                coursesResponse.status +
+                " - " +
+                (await coursesResponse.text());
+              document.getElementById("status").textContent +=
+                "\n❌ Lấy danh sách khóa học thất bại!";
+            }
+          } catch (error) {
+            document.getElementById("courses").textContent =
+              "Lỗi: " + error.message;
+          }
+        } catch (error) {
+          document.getElementById("status").textContent =
+            "❌ Lỗi kết nối: " + error.message;
+        }
+      }
+    </script>
+  </body>
+</html>

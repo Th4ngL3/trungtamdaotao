@@ -1,0 +1,107 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Test and Fix Tokens</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 8px 15px; margin: 5px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        textarea { width: 100%; height: 80px; margin: 10px 0; }
+        .result { margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px; }
+      </style>
+    </head>
+    <body>
+      <h1>Token Debugger and Fixer</h1>
+      
+      <div class="container">
+        <h2>Current Token</h2>
+        <button onclick="checkCurrentToken()">Check Current Token</button>
+        <div id="currentTokenResult" class="result"></div>
+      </div>
+      
+      <div class="container">
+        <h2>Set String ID Token</h2>
+        <p>This token has the _id properly stored as a string.</p>
+        <button onclick="setStringToken()">Set String ID Token</button>
+        <textarea id="stringToken">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2ODU2NTk1NzI3MGE0ZTdiZWUzZTE2NGEiLCJlbWFpbCI6InRlYWNoZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidGVhY2hlciIsImlhdCI6MTc1MDQ5MDg2MSwiZXhwIjoxNzUwNTc3MjYxfQ.7TXiEzhSoglVKU4xmJ_ExBfA-ymMTAe7JV0uyTTeRTg</textarea>
+      </div>
+      
+      <div class="container">
+        <h2>Set Object ID Token</h2>
+        <p>This token has the _id stored as an object (potentially problematic).</p>
+        <button onclick="setObjectToken()">Set Object ID Token</button>
+        <textarea id="objectToken">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2ODU2NTk1NzI3MGE0ZTdiZWUzZTE2NGEiLCJlbWFpbCI6InRlYWNoZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidGVhY2hlciIsImlhdCI6MTc1MDQ5MDg2MSwiZXhwIjoxNzUwNTc3MjYxfQ.7TXiEzhSoglVKU4xmJ_ExBfA-ymMTAe7JV0uyTTeRTg</textarea>
+      </div>
+      
+      <div class="container">
+        <h2>Fix Current Token</h2>
+        <button onclick="fixCurrentToken()">Fix and Replace Current Token</button>
+        <div id="fixResult" class="result"></div>
+      </div>
+      
+      <script>
+        function checkCurrentToken() {
+          const token = localStorage.getItem('token');
+          const resultDiv = document.getElementById('currentTokenResult');
+          
+          if (!token) {
+            resultDiv.innerHTML = 'No token found in localStorage';
+            return;
+          }
+          
+          // Get payload without verification (split token and decode middle part)
+          const payloadBase64 = token.split('.')[1];
+          const payload = JSON.parse(atob(payloadBase64));
+          
+          resultDiv.innerHTML = '<strong>Token found:</strong><br>' +
+            'ID type: ' + typeof payload._id + '<br>' +
+            'ID value: ' + payload._id + '<br>' +
+            'Full payload: ' + JSON.stringify(payload, null, 2);
+        }
+        
+        function setStringToken() {
+          const token = document.getElementById('stringToken').value;
+          localStorage.setItem('token', token);
+          alert('String ID token set in localStorage!');
+        }
+        
+        function setObjectToken() {
+          const token = document.getElementById('objectToken').value;
+          localStorage.setItem('token', token);
+          alert('Object ID token set in localStorage!');
+        }
+        
+        function fixCurrentToken() {
+          const token = localStorage.getItem('token');
+          const resultDiv = document.getElementById('fixResult');
+          
+          if (!token) {
+            resultDiv.innerHTML = 'No token found to fix';
+            return;
+          }
+          
+          try {
+            // Decode payload without verification
+            const payloadBase64 = token.split('.')[1];
+            const payload = JSON.parse(atob(payloadBase64));
+            
+            // Check if _id is an object
+            if (typeof payload._id === 'object' && payload._id !== null) {
+              resultDiv.innerHTML = 'Token needs fixing: _id is an object';
+              
+              // Convert to string format - we need to use the string token version
+              const stringToken = document.getElementById('stringToken').value;
+              localStorage.setItem('token', stringToken);
+              resultDiv.innerHTML += '<br>✅ Token replaced with string ID version!';
+            } else {
+              resultDiv.innerHTML = 'Token seems fine, _id is already a ' + typeof payload._id;
+            }
+          } catch (e) {
+            resultDiv.innerHTML = 'Error processing token: ' + e.message;
+          }
+        }
+      </script>
+    </body>
+    </html>
+    

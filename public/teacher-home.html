@@ -1,63 +1,814 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Teacher Home</title>
-  <script src="teacher-home.js" defer></script>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    header {
-      background-color: #34495e;
-      color: white;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    main {
-      padding: 20px;
-    }
-    .course-item {
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 10px;
-      background: #f9f9f9;
-    }
-    .course-item h3 { margin-top: 0; }
-    .btn {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .btn-primary {
-      background-color: #2ecc71;
-      color: white;
-    }
-    .btn-danger {
-      background-color: #e74c3c;
-      color: white;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <h2>Giảng viên: <span id="teacherName">Đang tải...</span></h2>
-    <button onclick="logout()" class="btn btn-danger">Đăng xuất</button>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teacher Home</title>
+    <script src="teacher-home.js" defer></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
 
-  <main>
-    <h3>Danh sách khóa học của bạn</h3>
-    <div id="myCourses"></div>
+      header {
+        background-color: #34495e;
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-    <h3>Tạo mới khóa học</h3>
-    <form id="createCourseForm">
-      <input type="text" id="title" placeholder="Tên khóa học" required>
-      <input type="text" id="description" placeholder="Mô tả" required>
-      <button type="submit" class="btn btn-primary">Tạo khóa học</button>
-    </form>
-  </main>
-</body>
+      main {
+        padding: 20px;
+      }
+
+      .course-item {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        background: #f9f9f9;
+      }
+
+      .course-item h3 {
+        margin-top: 0;
+      }
+
+      .btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background-color: #2ecc71;
+        color: white;
+      }
+
+      .btn-danger {
+        background-color: #e74c3c;
+        color: white;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content {
+        background-color: #fefefe;
+        margin: 10% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+      }
+
+      /* Tab styles */
+      .tab-container {
+        display: flex;
+        border-bottom: 2px solid #ddd;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .tab-btn {
+        padding: 10px 15px;
+        border: none;
+        background: #f8f9fa;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s;
+        margin-right: 5px;
+        margin-bottom: 5px;
+      }
+
+      .tab-btn.active {
+        background: #34495e;
+        color: white;
+        border-bottom-color: #2c3e50;
+      }
+
+      .tab-content {
+        padding: 20px 0;
+      }
+
+      .tab-pane {
+        display: none;
+      }
+
+      .tab-pane.active {
+        display: block;
+      }
+
+      /* Form styles */
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+
+      /* File actions */
+      .file-actions {
+        margin-bottom: 20px;
+      }
+
+      .file-actions button {
+        margin-right: 10px;
+        margin-bottom: 10px;
+      }
+
+      /* Assignment and notification items */
+      .assignment-item,
+      .notification-item,
+      .file-item {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+      }
+
+      .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .item-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .item-actions button {
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+
+      /* Student list styles */
+      .student-item {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .student-info h5 {
+        margin: 0 0 5px 0;
+      }
+
+      .student-info p {
+        margin: 0;
+        font-size: 14px;
+        color: #666;
+      }
+
+      /* Notification styles */
+      .notification-item {
+        background: #f8f9fa;
+        border-left: 4px solid #007bff;
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .notification-item h4 {
+        margin-top: 0;
+        margin-bottom: 10px;
+      }
+
+      .notification-item .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .notification-item .item-info {
+        margin: 10px 0;
+      }
+
+      .notification-item .item-info .badge {
+        display: inline-block;
+        padding: 3px 7px;
+        font-size: 12px;
+        font-weight: bold;
+        border-radius: 3px;
+        margin-right: 5px;
+      }
+
+      .bg-primary {
+        background-color: #007bff;
+        color: white;
+      }
+
+      .bg-success {
+        background-color: #28a745;
+        color: white;
+      }
+
+      .bg-warning {
+        background-color: #ffc107;
+        color: black;
+      }
+
+      .bg-danger {
+        background-color: #dc3545;
+        color: white;
+      }
+
+      .bg-info {
+        background-color: #17a2b8;
+        color: white;
+      }
+
+      .text-danger {
+        color: #dc3545;
+      }
+
+      .text-warning {
+        color: #ffc107;
+      }
+
+      /* Notification alert */
+      .notification-alert {
+        animation: slideIn 0.5s forwards;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .notification-alert-content {
+        position: relative;
+      }
+
+      .notification-alert-content button {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: none;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        color: #666;
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <h2>Giảng viên: <span id="teacherName">Đang tải...</span></h2>
+      <div>
+        <button onclick="showProfile()" class="btn btn-primary">
+          Thông tin cá nhân
+        </button>
+        <button onclick="logout()" class="btn btn-danger">Đăng xuất</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="tab-container">
+        <button class="tab-btn active" onclick="showTab('courses')">
+          Khóa học của tôi
+        </button>
+        <button class="tab-btn" onclick="showTab('materials')">
+          Tài liệu dạy học
+        </button>
+        <button class="tab-btn" onclick="showTab('assignments')">
+          Bài tập
+        </button>
+        <button class="tab-btn" onclick="showTab('notifications')">
+          Thông báo
+        </button>
+        <button class="tab-btn" onclick="showTab('profile')">
+          Thông tin cá nhân
+        </button>
+        <button class="tab-btn" onclick="showTab('studentLists')">
+          Danh sách học viên đã thanh toán
+        </button>
+      </div>
+
+      <div class="tab-content">
+        <!-- Tab: Khóa học -->
+        <div id="courses-tab" class="tab-pane active">
+          <h2>Khóa học của tôi</h2>
+          <button id="showCreateFormBtn" class="btn btn-primary">
+            Tạo khóa học mới
+          </button>
+          <div id="myCourses" class="mt-3"></div>
+        </div>
+
+        <!-- Tab: Tài liệu dạy học -->
+        <div id="materials-tab" class="tab-pane">
+          <h2>Tài liệu dạy học</h2>
+          <div class="file-actions">
+            <button class="btn btn-primary" onclick="showUploadMaterialForm()">
+              Tải lên tài liệu mới
+            </button>
+          </div>
+          <div id="materialsList"></div>
+        </div>
+
+        <!-- Tab: Bài tập -->
+        <div id="assignments-tab" class="tab-pane">
+          <h2>Bài tập</h2>
+          <div class="file-actions">
+            <button
+              class="btn btn-primary"
+              onclick="showCreateAssignmentModal()"
+            >
+              Tạo bài tập mới
+            </button>
+          </div>
+          <div id="assignmentsList"></div>
+        </div>
+
+        <!-- Tab: Thông báo -->
+        <div id="notifications-tab" class="tab-pane">
+          <h2>Thông báo</h2>
+          <div class="file-actions">
+            <button
+              class="btn btn-primary"
+              onclick="showCreateNotificationForm()"
+            >
+              Tạo thông báo mới
+            </button>
+          </div>
+          <div id="notificationsList"></div>
+        </div>
+
+        <!-- Tab: Thông tin cá nhân -->
+        <div id="profile-tab" class="tab-pane">
+          <h2>Thông tin cá nhân</h2>
+          <form id="profileForm">
+            <div class="form-group">
+              <label for="fullName">Họ và tên:</label>
+              <input
+                type="text"
+                id="fullName"
+                name="fullName"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="email">Email:</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                class="form-control"
+                readonly
+              />
+            </div>
+            <div class="form-group">
+              <label for="phone">Số điện thoại:</label>
+              <input type="tel" id="phone" name="phone" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label for="address">Địa chỉ:</label>
+              <textarea
+                id="address"
+                name="address"
+                class="form-control"
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label for="dateOfBirth">Ngày sinh:</label>
+              <input
+                type="date"
+                id="dateOfBirth"
+                name="dateOfBirth"
+                class="form-control"
+              />
+            </div>
+            <button type="submit" class="btn btn-primary">
+              Cập nhật thông tin
+            </button>
+          </form>
+
+          <h3 style="margin-top: 20px">Đổi mật khẩu</h3>
+          <form id="passwordForm">
+            <div class="form-group">
+              <label for="currentPassword">Mật khẩu hiện tại:</label>
+              <input
+                type="password"
+                id="currentPassword"
+                name="currentPassword"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="newPassword">Mật khẩu mới:</label>
+              <input
+                type="password"
+                id="newPassword"
+                name="newPassword"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="confirmPassword">Xác nhận mật khẩu mới:</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                class="form-control"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-primary">Đổi mật khẩu</button>
+          </form>
+        </div>
+
+        <!-- Tab: Danh sách học viên đã thanh toán -->
+        <div id="studentLists-tab" class="tab-pane">
+          <h2>Danh sách học viên đã thanh toán</h2>
+          <div id="studentListFiles"></div>
+        </div>
+      </div>
+
+      <!-- Modals -->
+      <!-- Create Course Modal -->
+      <div id="createCourseModal" class="modal">
+        <div class="modal-content">
+          <h4>Tạo mới khóa học</h4>
+          <form id="createCourseForm">
+            <div class="form-group">
+              <label>Tên khóa học:</label>
+              <input
+                type="text"
+                id="courseName"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>Mô tả:</label>
+              <textarea
+                id="courseDescription"
+                class="form-control"
+                required
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label>Ngày bắt đầu:</label>
+              <input type="date" id="startDate" class="form-control" required />
+            </div>
+            <div class="form-group">
+              <label>Ngày kết thúc:</label>
+              <input type="date" id="endDate" class="form-control" required />
+            </div>
+            <div class="form-group">
+              <label>Số học viên tối đa:</label>
+              <input
+                type="number"
+                id="maxStudents"
+                class="form-control"
+                value="50"
+                min="1"
+              />
+            </div>
+            <div class="form-group">
+              <label>Link Google Meet:</label>
+              <input
+                type="url"
+                id="meetLink"
+                class="form-control"
+                placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>Lịch học:</label>
+              <div id="scheduleContainer">
+                <div class="schedule-row">
+                  <select class="schedule-day form-control">
+                    <option value="Thứ 2">Thứ 2</option>
+                    <option value="Thứ 3">Thứ 3</option>
+                    <option value="Thứ 4">Thứ 4</option>
+                    <option value="Thứ 5">Thứ 5</option>
+                    <option value="Thứ 6">Thứ 6</option>
+                    <option value="Thứ 7">Thứ 7</option>
+                    <option value="Chủ Nhật">Chủ Nhật</option>
+                  </select>
+                  <input
+                    type="time"
+                    class="schedule-start-time form-control"
+                    value="18:00"
+                    required
+                  />
+                  <span>-</span>
+                  <input
+                    type="time"
+                    class="schedule-end-time form-control"
+                    value="20:00"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-danger remove-schedule"
+                  >
+                    X
+                  </button>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                id="addScheduleBtn"
+              >
+                + Thêm lịch học
+              </button>
+            </div>
+            <button type="submit" class="btn btn-primary">Tạo khóa học</button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              onclick="closeModal('createCourseModal')"
+            >
+              Hủy
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Edit Course Modal -->
+      <div id="editCourseModal" class="modal">
+        <div class="modal-content">
+          <h4>Chỉnh sửa khóa học</h4>
+          <form id="editCourseForm">
+            <input type="hidden" id="editCourseId" />
+            <div class="form-group">
+              <label>Tên khóa học:</label>
+              <input
+                type="text"
+                id="editCourseName"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>Mô tả:</label>
+              <textarea
+                id="editCourseDescription"
+                class="form-control"
+                required
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label>Ngày bắt đầu:</label>
+              <input
+                type="date"
+                id="editStartDate"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>Ngày kết thúc:</label>
+              <input
+                type="date"
+                id="editEndDate"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>Số học viên tối đa:</label>
+              <input
+                type="number"
+                id="editMaxStudents"
+                class="form-control"
+                value="50"
+                min="1"
+              />
+            </div>
+            <div class="form-group">
+              <label>Link Google Meet:</label>
+              <input
+                type="url"
+                id="editMeetLink"
+                class="form-control"
+                placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>Lịch học:</label>
+              <div id="editScheduleContainer">
+                <!-- Schedule rows will be added dynamically -->
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                id="editAddScheduleBtn"
+              >
+                + Thêm lịch học
+              </button>
+            </div>
+            <button type="submit" class="btn btn-primary">
+              Cập nhật khóa học
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              onclick="closeModal('editCourseModal')"
+            >
+              Hủy
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Create Assignment Modal -->
+      <div id="createAssignmentModal" class="modal">
+        <div class="modal-content">
+          <h4>Tạo bài tập mới</h4>
+          <form id="createAssignmentForm">
+            <div class="form-group">
+              <label>Khóa học:</label>
+              <select id="assignmentCourse" class="form-control" required>
+                <option value="">Chọn khóa học</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tiêu đề bài tập:</label>
+              <input
+                type="text"
+                id="assignmentTitle"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>Mô tả:</label>
+              <textarea
+                id="assignmentDescription"
+                class="form-control"
+                required
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label>Hướng dẫn:</label>
+              <textarea
+                id="assignmentInstructions"
+                class="form-control"
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label>Hạn nộp:</label>
+              <input
+                type="datetime-local"
+                id="assignmentDueDate"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>Điểm tối đa:</label>
+              <input
+                type="number"
+                id="assignmentMaxScore"
+                class="form-control"
+                value="100"
+                min="1"
+              />
+            </div>
+            <button type="submit" class="btn btn-primary">Tạo bài tập</button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              onclick="closeModal('createAssignmentModal')"
+            >
+              Hủy
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Create Notification Modal -->
+      <div id="createNotificationModal" class="modal">
+        <div class="modal-content">
+          <h4>Tạo thông báo mới</h4>
+          <form id="createNotificationForm">
+            <div class="form-group">
+              <label>Khóa học (tùy chọn):</label>
+              <select id="notificationCourse" class="form-control">
+                <option value="">Tất cả khóa học</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tiêu đề:</label>
+              <input
+                type="text"
+                id="notificationTitle"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>Nội dung:</label>
+              <textarea
+                id="notificationContent"
+                class="form-control"
+                required
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label>Độ ưu tiên:</label>
+              <select id="notificationPriority" class="form-control">
+                <option value="normal">Bình thường</option>
+                <option value="high">Cao</option>
+                <option value="urgent">Khẩn cấp</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Tạo thông báo</button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              onclick="closeModal('createNotificationModal')"
+            >
+              Hủy
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Upload File Modal -->
+      <div id="uploadFileModal" class="modal">
+        <div class="modal-content">
+          <h4>Upload tài liệu</h4>
+          <form id="uploadFileForm" enctype="multipart/form-data">
+            <div class="form-group">
+              <label>Khóa học:</label>
+              <select id="fileCourse" class="form-control" required>
+                <option value="">Chọn khóa học</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>File:</label>
+              <input type="file" id="fileInput" class="form-control" required />
+            </div>
+            <div class="form-group">
+              <label>Mô tả:</label>
+              <textarea id="fileDescription" class="form-control"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              onclick="closeModal('uploadFileModal')"
+            >
+              Hủy
+            </button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </body>
 </html>
