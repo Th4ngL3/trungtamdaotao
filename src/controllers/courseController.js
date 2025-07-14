@@ -11,9 +11,7 @@ async function courseController(fastify) {
         const allCourses = await courses.getAllCourses();
         reply.send(allCourses);
       } catch (error) {
-        reply
-          .code(500)
-          .send({ error: "Lỗi lấy danh sách khóa học: " + error.message });
+        reply.code(500).send({ error: "Lỗi lấy danh sách khóa học: " + error.message });
       }
     },
 
@@ -29,9 +27,7 @@ async function courseController(fastify) {
 
         reply.send(course);
       } catch (error) {
-        reply
-          .code(500)
-          .send({ error: "Lỗi lấy thông tin khóa học: " + error.message });
+        reply.code(500).send({ error: "Lỗi lấy thông tin khóa học: " + error.message });
       }
     },
 
@@ -74,17 +70,13 @@ async function courseController(fastify) {
         // Kiểm tra quyền sở hữu
         const course = await courses.findById(id);
         if (!course || course.teacherId.toString() !== teacherId) {
-          return reply
-            .code(403)
-            .send({ error: "Bạn không có quyền chỉnh sửa khóa học này" });
+          return reply.code(403).send({ error: "Bạn không có quyền chỉnh sửa khóa học này" });
         }
 
         await courses.updateCourse(id, updateData);
         reply.send({ success: true, message: "Cập nhật khóa học thành công" });
       } catch (error) {
-        reply
-          .code(500)
-          .send({ error: "Lỗi cập nhật khóa học: " + error.message });
+        reply.code(500).send({ error: "Lỗi cập nhật khóa học: " + error.message });
       }
     },
 
@@ -97,9 +89,7 @@ async function courseController(fastify) {
         // Kiểm tra quyền sở hữu
         const course = await courses.findById(id);
         if (!course || course.teacherId.toString() !== teacherId) {
-          return reply
-            .code(403)
-            .send({ error: "Bạn không có quyền xóa khóa học này" });
+          return reply.code(403).send({ error: "Bạn không có quyền xóa khóa học này" });
         }
 
         await courses.deleteCourse(id);
@@ -116,9 +106,7 @@ async function courseController(fastify) {
         const teacherCourses = await courses.findByTeacherId(teacherId);
         reply.send(teacherCourses);
       } catch (error) {
-        reply
-          .code(500)
-          .send({ error: "Lỗi lấy khóa học của giảng viên: " + error.message });
+        reply.code(500).send({ error: "Lỗi lấy khóa học của giảng viên: " + error.message });
       }
     },
 
@@ -129,9 +117,7 @@ async function courseController(fastify) {
 
         if (!request.user || !request.user._id) {
           console.log("Không tìm thấy thông tin người dùng trong request");
-          return reply
-            .code(401)
-            .send({ error: "Không tìm thấy thông tin người dùng" });
+          return reply.code(401).send({ error: "Không tìm thấy thông tin người dùng" });
         }
 
         const studentId = request.user._id;
@@ -145,9 +131,7 @@ async function courseController(fastify) {
 
         if (!student) {
           console.log("Không tìm thấy học viên với ID:", studentId);
-          return reply
-            .code(404)
-            .send({ error: "Không tìm thấy thông tin học viên" });
+          return reply.code(404).send({ error: "Không tìm thấy thông tin học viên" });
         }
 
         console.log("Tìm khóa học cho học viên:", studentId);
@@ -160,8 +144,7 @@ async function courseController(fastify) {
               { students: new ObjectId(studentId) },
               { "students.studentId": new ObjectId(studentId) },
             ],
-          })
-          .toArray();
+          }).toArray();
 
         console.log(
           `Tìm thấy trực tiếp ${directEnrolledCourses.length} khóa học`
@@ -200,9 +183,7 @@ async function courseController(fastify) {
         reply.send(combinedCourses);
       } catch (error) {
         console.error("Lỗi lấy khóa học của học viên:", error);
-        reply
-          .code(500)
-          .send({ error: "Lỗi lấy khóa học của học viên: " + error.message });
+        reply.code(500).send({ error: "Lỗi lấy khóa học của học viên: " + error.message });
       }
     },
 
@@ -277,15 +258,11 @@ async function courseController(fastify) {
         console.log(`Student already pending: ${isPending}`);
 
         if (isEnrolled) {
-          return reply
-            .code(400)
-            .send({ error: "Bạn đã đăng ký khóa học này rồi" });
+          return reply.code(400).send({ error: "Bạn đã đăng ký khóa học này rồi" });
         }
 
         if (isPending) {
-          return reply
-            .code(400)
-            .send({ error: "Yêu cầu đăng ký của bạn đang chờ duyệt" });
+          return reply.code(400).send({ error: "Yêu cầu đăng ký của bạn đang chờ duyệt" });
         }
 
         // Kiểm tra số lượng tối đa
@@ -313,9 +290,7 @@ async function courseController(fastify) {
         });
       } catch (error) {
         console.error("Error in enrollInCourse:", error);
-        reply
-          .code(500)
-          .send({ error: "Lỗi đăng ký khóa học: " + error.message });
+        reply.code(500).send({ error: "Lỗi đăng ký khóa học: " + error.message });
       }
     },
 
@@ -335,9 +310,7 @@ async function courseController(fastify) {
           (s) => s.studentId.toString() === studentId
         );
         if (!isEnrolled) {
-          return reply
-            .code(400)
-            .send({ error: "Bạn chưa đăng ký khóa học này" });
+          return reply.code(400).send({ error: "Bạn chưa đăng ký khóa học này" });
         }
 
         await courses.unenrollStudent(id, studentId);
@@ -346,9 +319,7 @@ async function courseController(fastify) {
           message: "Hủy đăng ký khóa học thành công",
         });
       } catch (error) {
-        reply
-          .code(500)
-          .send({ error: "Lỗi hủy đăng ký khóa học: " + error.message });
+        reply.code(500).send({ error: "Lỗi hủy đăng ký khóa học: " + error.message });
       }
     },
 
@@ -370,9 +341,7 @@ async function courseController(fastify) {
         );
 
         if (studentIndex === -1) {
-          return reply
-            .code(400)
-            .send({ error: "Bạn chưa đăng ký khóa học này" });
+          return reply.code(400).send({ error: "Bạn chưa đăng ký khóa học này" });
         }
 
         // Cập nhật thông tin thanh toán
@@ -398,9 +367,7 @@ async function courseController(fastify) {
         });
       } catch (error) {
         console.error("Lỗi xác nhận thanh toán:", error);
-        reply
-          .code(500)
-          .send({ error: "Lỗi xác nhận thanh toán: " + error.message });
+        reply.code(500).send({ error: "Lỗi xác nhận thanh toán: " + error.message });
       }
     },
 
@@ -413,17 +380,13 @@ async function courseController(fastify) {
         // Kiểm tra quyền
         const course = await courses.findById(id);
         if (!course || course.teacherId.toString() !== teacherId) {
-          return reply
-            .code(403)
-            .send({ error: "Bạn không có quyền xem danh sách học viên" });
+          return reply.code(403).send({ error: "Bạn không có quyền xem danh sách học viên" });
         }
 
         const courseWithStudents = await courses.getStudentsInCourse(id);
         reply.send(courseWithStudents);
       } catch (error) {
-        reply
-          .code(500)
-          .send({ error: "Lỗi lấy danh sách học viên: " + error.message });
+        reply.code(500).send({ error: "Lỗi lấy danh sách học viên: " + error.message });
       }
     },
 

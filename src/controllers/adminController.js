@@ -8,9 +8,7 @@ module.exports = (fastify) => {
   async function verifyAdmin(request, reply) {
     await fastify.authenticate(request, reply);
     if (!request.user || request.user.role !== "admin") {
-      return reply
-        .code(403)
-        .send({ error: "Chỉ admin mới được phép truy cập" });
+      return reply.code(403).send({ error: "Chỉ admin mới được phép truy cập" });
     }
   }
 

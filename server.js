@@ -4,34 +4,25 @@ const fastify = require("fastify")({ logger: true });
 const WebSocket = require("ws");
 const jwt = require("jsonwebtoken");
 const { ObjectId } = require("mongodb");
-
-// Global WebSocket clients map
 const clients = new Map();
 
-// Check environment variables
-console.log("MongoDB URL:", process.env.MONGO_URL || "Not defined");
-
 // Route mặc định sẽ serve index.html từ thư mục public
-// fastify.get('/', (req,rep) =>{
-//     rep.send('hi')
-// })
 
-// Configure multipart with explicit options
+// Cấu hình multipart với các tùy chọn rõ ràng
 fastify.register(require("@fastify/multipart"), {
   limits: {
-    fieldNameSize: 100, // Max field name size in bytes
-    fieldSize: 1000000, // Max field value size in bytes
-    fields: 10, // Max number of non-file fields
-    fileSize: 10000000, // 10MB limit for files
-    files: 1, // For single file uploads
-    headerPairs: 2000, // Max number of header key-value pairs
+    fieldNameSize: 100, // Giới hạn độ dài tên các field
+    fieldSize: 1000000, // Giới hạn độ dài cho giá trị của filed
+    fields: 10, // giới hạn số lượng trường form
+    fileSize: 10000000, // Kích thươc file tối đa 10MB
+    files: 1, // Chỉ đc uploads 1 file trong 1 req
+    headerPairs: 2000, 
   },
-  attachFieldsToBody: false, // Changed to false to allow using request.file()
+  attachFieldsToBody: false, // đặt false để dùng trực tiếp request.file()
 });
 
 fastify.register(require("@fastify/formbody"));
-// Cho phép truy cập từ frontend (CORS)
-fastify.register(require("@fastify/cors"));
+fastify.register(require("@fastify/cors"));// Cho phép truy cập từ frontend (CORS)
 // Serve file tĩnh từ thư mục public
 fastify.register(require("@fastify/static"), {
   root: path.join(__dirname, "public"),
@@ -47,12 +38,12 @@ fastify.register(require("@fastify/static"), {
 // Kết nối MongoDB
 fastify.register(require("@fastify/mongodb"), {
   forceClose: true,
-  url: process.env.MONGO_URL || "mongodb://127.0.0.1:27017/trungtamdaotao",
+  url: process.env.MONGO_URL,
 });
 
 //Phân quyền
 fastify.register(require("@fastify/jwt"), {
-  secret: process.env.JWT_SECRET || "supersecretkey",
+  secret: process.env.JWT_SECRET,
 });
 
 // Middleware xác thực token
@@ -64,13 +55,9 @@ fastify.decorate("authenticate", async function (request, reply) {
   }
 });
 
-fastify.get(
-  "/protected",
-  { preValidation: [fastify.authenticate] },
-  async (request, reply) => {
+fastify.get("/protected",{ preValidation: [fastify.authenticate] },async (request, reply) => {
     reply.send({ data: "Bạn đã xác thực thành công!" });
-  }
-);
+});
 
 // Middleware kiểm tra quyền admin
 fastify.decorate("isAdmin", async function (request, reply) {
@@ -92,51 +79,38 @@ fastify.decorate("isTeacher", async function (request, reply) {
 fastify.decorate("isAdminOrTeacher", async function (request, reply) {
   await request.jwtVerify();
   if (request.user.role !== "admin" && request.user.role !== "teacher") {
-    return reply
-      .code(403)
-      .send({ error: "Bạn không có quyền thực hiện hành động này" });
+    return reply.code(403).send({ error: "Bạn không có quyền thực hiện hành động này" });
   }
-});
+}); 
 
-fastify.get(
-  "/admin/data",
-  { preValidation: [fastify.isAdmin] },
-  async (req, rep) => {
+fastify.get("/admin/data",{ preValidation: [fastify.isAdmin] },async (req, rep) => {
     rep.send({ message: "Chỉ admin mới thấy được route này" });
-  }
-);
+});
 
 // Import và đăng ký các route
 fastify.register(require("./src/routes/userRoutes"), { prefix: "/users" });
-fastify.register(require("./src/routes/studentRoutes"), {
-  prefix: "/students",
-});
-fastify.register(require("./src/routes/teacherRoutes"), {
-  prefix: "/teachers",
-});
+fastify.register(require("./src/routes/studentRoutes"), { prefix: "/students", });
+fastify.register(require("./src/routes/teacherRoutes"), { prefix: "/teachers", });
 fastify.register(require("./src/routes/adminRoutes"), { prefix: "/admin" });
 fastify.register(require("./src/routes/courseRoutes"), { prefix: "/courses" });
-fastify.register(require("./src/routes/assignmentRoutes"), {
-  prefix: "/assignments",
-});
-fastify.register(require("./src/routes/notificationRoutes"), {
-  prefix: "/notifications",
-});
+fastify.register(require("./src/routes/assignmentRoutes"), { prefix: "/assignments", });
+fastify.register(require("./src/routes/notificationRoutes"), { prefix: "/notifications", });
 fastify.register(require("./src/routes/fileRoutes"), { prefix: "/files" });
 
-// Chạy server
+// Chạy server 
 const startServer = async () => {
   try {
     await fastify.listen({ port: 3003 });
 
-    // Set up WebSocket server after Fastify is successfully started
+    // Thiết lập máy chủ WebSocket để khởi động tính năng gửi nhận thông báo 
     const wss = new WebSocket.Server({
-      server: fastify.server, // Use the underlying HTTP server from fastify
+      server: fastify.server,
     });
 
+    //Xử lý khi client kết nối với websocket
     wss.on("connection", async function connection(ws, req) {
       try {
-        // Parse URL to get query parameters
+        // Xử lý token xác thực từ client
         const url = new URL(req.url, "http://localhost");
         const token = url.searchParams.get("token");
 
@@ -145,8 +119,8 @@ const startServer = async () => {
           return;
         }
 
-        // Verify token
-        const jwtSecret = process.env.JWT_SECRET || "supersecretkey";
+        // Xác minh token
+        const jwtSecret = process.env.JWT_SECRET;
         const decoded = jwt.verify(token, jwtSecret);
 
         if (!decoded || !decoded._id) {
@@ -155,13 +129,8 @@ const startServer = async () => {
         }
 
         const userId = decoded._id;
+        clients.set(userId, ws); // Gán userId làm key , ws làm value
 
-        // Store client connection with user ID
-        clients.set(userId, ws);
-
-        console.log(`WebSocket client connected: ${userId}`);
-
-        // Send welcome message
         ws.send(
           JSON.stringify({
             type: "connection",
@@ -169,19 +138,11 @@ const startServer = async () => {
           })
         );
 
-        // Handle client messages
-        ws.on("message", function incoming(message) {
-          console.log(`Received message from ${userId}: ${message}`);
-          // Handle client messages if needed
-        });
-
-        // Handle client disconnect
+        // Ngắt kết nối
         ws.on("close", function close() {
-          console.log(`WebSocket client disconnected: ${userId}`);
           clients.delete(userId);
         });
       } catch (error) {
-        console.error("WebSocket connection error:", error);
         ws.close(1011, "Server error");
       }
     });
@@ -193,17 +154,12 @@ const startServer = async () => {
 
 startServer();
 
-// Function to broadcast notification to relevant users
-fastify.decorate(
-  "broadcastNotification",
-  async function (notification, targetUserIds = null) {
+// Chức năng phát thông báo đến người dùng có liên quan
+fastify.decorate("broadcastNotification",async function (notification, targetUserIds = null) {
     try {
-      // If targetUserIds is provided, only send to those users
-      // Otherwise, send to all connected clients
       const recipients = targetUserIds || Array.from(clients.keys());
 
-      console.log(`Broadcasting notification to ${recipients.length} users`);
-
+      //Lọc từng user để lấy ws tương ứng
       recipients.forEach((userId) => {
         const client = clients.get(userId);
         if (client && client.readyState === WebSocket.OPEN) {
@@ -216,15 +172,13 @@ fastify.decorate(
         }
       });
     } catch (error) {
-      console.error("Error broadcasting notification:", error);
+      console.error("Lỗi phát thông báo:", error);
     }
   }
 );
 
-// Function to notify about notification updates
-fastify.decorate(
-  "notifyNotificationUpdate",
-  async function (notificationId, targetUserIds = null) {
+// Thông báo về việc cập nhật thông báo 
+fastify.decorate("notifyNotificationUpdate",async function (notificationId, targetUserIds = null) {
     try {
       const recipients = targetUserIds || Array.from(clients.keys());
 
@@ -245,10 +199,8 @@ fastify.decorate(
   }
 );
 
-// Function to notify about notification deletion
-fastify.decorate(
-  "notifyNotificationDelete",
-  async function (notificationId, targetUserIds = null) {
+// Thông báo về việc Xóa thông báo 
+fastify.decorate("notifyNotificationDelete",async function (notificationId, targetUserIds = null) {
     try {
       const recipients = targetUserIds || Array.from(clients.keys());
 

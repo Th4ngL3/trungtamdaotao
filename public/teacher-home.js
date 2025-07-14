@@ -52,7 +52,6 @@ async function loadUserInfo() {
       fillProfileForm();
     }
   } catch (error) {
-    console.error("Error loading user info:", error);
     localStorage.removeItem("token");
     window.location.href = "/index.html";
   }
@@ -99,7 +98,6 @@ async function loadPendingEnrollmentsCount() {
     // Update the UI
     updatePendingEnrollmentsUI();
   } catch (error) {
-    console.error("Error loading pending enrollments count:", error);
   }
 }
 
@@ -131,10 +129,9 @@ function updatePendingEnrollmentsUI() {
     // Update counter content
     pendingCounter.innerHTML = `
       <i class="fas fa-user-clock"></i> ${pendingStudentsTotal} học viên chờ duyệt
-      ${
-        pendingStudentsTotal > 0
-          ? '<span style="display:inline-block;width:8px;height:8px;background:#fff;border-radius:50%;position:absolute;top:5px;right:5px;animation:blink 1s infinite;"></span>'
-          : ""
+      ${pendingStudentsTotal > 0
+        ? '<span style="display:inline-block;width:8px;height:8px;background:#fff;border-radius:50%;position:absolute;top:5px;right:5px;animation:blink 1s infinite;"></span>'
+        : ""
       }
     `;
 
@@ -203,25 +200,17 @@ function showTab(tabName) {
 // Load courses
 async function loadCourses() {
   try {
-    console.log("Đang tải khóa học của giáo viên...");
-
     const response = await fetch("/teachers/courses", {
       headers: { Authorization: `Bearer ${token}` },
     });
-
-    console.log("Response status:", response.status);
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("API response error:", errorText);
       throw new Error(
         `Failed to load courses: ${response.status} ${errorText}`
       );
     }
 
     const courses = await response.json();
-    console.log("Loaded courses:", courses);
-
     const container = document.getElementById("myCourses");
 
     if (!courses || courses.length === 0) {
@@ -230,15 +219,9 @@ async function loadCourses() {
     }
 
     // Process each course to add pending students counts
-    console.log("Getting student details for each course...");
     const coursesWithDetails = await Promise.all(
       courses.map(async (course) => {
         try {
-          console.log(
-            `Fetching students for course ${course._id} (${
-              course.title || course.courseName
-            })...`
-          );
           const studentRes = await fetch(
             `/teachers/courses/${course._id}/students`,
             {
@@ -246,27 +229,18 @@ async function loadCourses() {
             }
           );
 
-          console.log(
-            `Student API response for course ${course._id}:`,
-            studentRes.status
-          );
 
           if (studentRes.ok) {
             const studentData = await studentRes.json();
-            console.log(`Student data for course ${course._id}:`, studentData);
             course.pendingCount = studentData.pendingStudents
               ? studentData.pendingStudents.length
               : 0;
             course.approvedCount = studentData.approvedStudents
               ? studentData.approvedStudents.length
               : 0;
-            console.log(
-              `Course ${course._id} has ${course.pendingCount} pending and ${course.approvedCount} approved students`
-            );
           } else {
             course.pendingCount = 0;
             course.approvedCount = 0;
-            console.error(`Failed to get students for course ${course._id}`);
           }
 
           // As a fallback, also check the course's students array directly
@@ -276,9 +250,6 @@ async function loadCourses() {
             Array.isArray(course.students)
           ) {
             course.approvedCount = course.students.length;
-            console.log(
-              `Using fallback count: ${course.approvedCount} students from course.students array`
-            );
           }
         } catch (err) {
           console.error(
@@ -291,17 +262,11 @@ async function loadCourses() {
           // As a fallback, also check the course's students array directly
           if (course.students && Array.isArray(course.students)) {
             course.approvedCount = course.students.length;
-            console.log(
-              `Using fallback count after error: ${course.approvedCount} students from course.students array`
-            );
           }
         }
         return course;
       })
     );
-
-    console.log("Courses with student counts:", coursesWithDetails);
-
     container.innerHTML = coursesWithDetails
       .map(
         (course) => `
@@ -309,78 +274,67 @@ async function loadCourses() {
         <h3>${course.title || course.courseName || "Khóa học không tên"}</h3>
         
         <div style="margin-bottom: 10px; display: flex; gap: 10px;">
-          ${
-            course.pendingCount > 0
-              ? `<div style="display: inline-block; background-color: #ff7675; color: white; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 13px;">
+          ${course.pendingCount > 0
+            ? `<div style="display: inline-block; background-color: #ff7675; color: white; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 13px;">
                 <i class="fas fa-user-clock"></i> ${course.pendingCount} học viên chờ duyệt
               </div>`
-              : ""
+            : ""
           }
           <div style="display: inline-block; background-color: #55efc4; color: #333; padding: 5px 10px; border-radius: 20px; font-size: 13px;">
-            <i class="fas fa-user-check"></i> ${
-              course.approvedCount
-            } học viên đã duyệt
+            <i class="fas fa-user-check"></i> ${course.approvedCount
+          } học viên đã duyệt
           </div>
         </div>
 
         <p>${course.description || ""}</p>
         <p><strong>Thời gian:</strong> 
-          ${
-            course.startDate
-              ? new Date(course.startDate).toLocaleDateString()
-              : "N/A"
+          ${course.startDate
+            ? new Date(course.startDate).toLocaleDateString()
+            : "N/A"
           } - 
-          ${
-            course.endDate
-              ? new Date(course.endDate).toLocaleDateString()
-              : "N/A"
+          ${course.endDate
+            ? new Date(course.endDate).toLocaleDateString()
+            : "N/A"
           }
         </p>
-        ${
-          course.schedule
+        ${course.schedule
             ? `
           <p><strong>Lịch học:</strong></p>
           <ul>
-            ${
-              Array.isArray(course.schedule)
-                ? course.schedule
-                    .map(
-                      (s) =>
-                        `<li>${
-                          typeof s === "object" ? `${s.day}: ${s.time}` : s
-                        }</li>`
-                    )
-                    .join("")
-                : ""
+            ${Array.isArray(course.schedule)
+              ? course.schedule
+                .map(
+                  (s) =>
+                    `<li>${typeof s === "object" ? `${s.day}: ${s.time}` : s
+                    }</li>`
+                )
+                .join("")
+              : ""
             }
           </ul>
         `
             : ""
-        }
-        ${
-          course.meetLink
+          }
+        ${course.meetLink
             ? `
           <p><strong>Link Meet:</strong> 
             <a href="${course.meetLink}" target="_blank">${course.meetLink}</a>
           </p>
         `
             : ""
-        }
+          }
         <div style="margin-top: 15px; display: flex; gap: 10px;">
-          <button class="btn btn-primary" onclick="viewStudents('${
-            course._id
+          <button class="btn btn-primary" onclick="viewStudents('${course._id
           }')">
             Xem học viên
           </button>
-          ${
-            course.pendingCount > 0
-              ? `<button class="btn" style="background-color: #ff7675; color: white;" onclick="viewStudents('${course._id}')">
+          ${course.pendingCount > 0
+            ? `<button class="btn" style="background-color: #ff7675; color: white;" onclick="viewStudents('${course._id}')">
                 <i class="fas fa-user-check"></i> Duyệt học viên
               </button>`
-              : ""
+            : ""
           }
-          <button class="btn btn-secondary" onclick="editCourse('${
-            course._id
+          <button class="btn btn-secondary" onclick="editCourse('${course._id
           }')">
             <i class="fas fa-edit"></i> Chỉnh sửa
           </button>
@@ -390,10 +344,7 @@ async function loadCourses() {
     `
       )
       .join("");
-
-    console.log("Course HTML rendered");
   } catch (error) {
-    console.error("Error loading courses:", error);
     document.getElementById(
       "myCourses"
     ).innerHTML = `<p>Lỗi tải khóa học: ${error.message}</p>`;
@@ -427,8 +378,7 @@ async function loadStudentLists() {
         </div>
         <p>${file.description || "Không có mô tả"}</p>
         <div class="item-actions">
-          <button class="btn btn-primary" onclick="downloadStudentList('${
-            file._id
+          <button class="btn btn-primary" onclick="downloadStudentList('${file._id
           }')">Tải xuống</button>
         </div>
       </div>
@@ -436,7 +386,6 @@ async function loadStudentLists() {
       )
       .join("");
   } catch (error) {
-    console.error("Error loading student lists:", error);
     studentListFilesEl.innerHTML = "<p>Lỗi tải danh sách học viên.</p>";
   }
 }
@@ -494,7 +443,6 @@ function setupProfileForm() {
           alert(result.error || "Lỗi cập nhật thông tin");
         }
       } catch (error) {
-        console.error("Error updating profile:", error);
         alert("Lỗi cập nhật thông tin");
       }
     });
@@ -538,7 +486,6 @@ function setupPasswordForm() {
           alert(result.error || "Lỗi đổi mật khẩu");
         }
       } catch (error) {
-        console.error("Error changing password:", error);
         alert("Lỗi đổi mật khẩu");
       }
     });
@@ -570,9 +517,7 @@ async function downloadFileSecure(fileId, fileType) {
 
       // Lấy thông tin người dùng để xác nhận token hợp lệ
       const userData = await checkResponse.json();
-      console.log(`Xác thực người dùng thành công: ${userData.email}`);
     } catch (authError) {
-      console.error("Lỗi xác thực:", authError);
       alert("Không thể xác thực phiên làm việc. Vui lòng đăng nhập lại.");
       localStorage.removeItem("token");
       window.location.href = "/index.html";
@@ -581,9 +526,6 @@ async function downloadFileSecure(fileId, fileType) {
 
     // Thêm timestamp để tránh cache
     const timestamp = new Date().getTime();
-
-    console.log(`Tải xuống file ${fileType} với ID: ${fileId}`);
-
     // Tạo một thẻ a tạm thời để tải xuống
     const downloadLink = document.createElement("a");
     downloadLink.href = `/files/${fileId}/download?token=${currentToken}&_t=${timestamp}`;
@@ -596,9 +538,7 @@ async function downloadFileSecure(fileId, fileType) {
     document.body.removeChild(downloadLink);
 
     // Thông báo thành công
-    console.log(`Đã bắt đầu tải xuống file ${fileType}`);
   } catch (error) {
-    console.error(`Lỗi tải xuống ${fileType}:`, error);
     alert(`Lỗi tải xuống ${fileType}: ${error.message}`);
   }
 }
@@ -636,7 +576,6 @@ async function loadMaterials() {
     // Load course materials
     await loadCourseMaterials();
   } catch (error) {
-    console.error("Error loading materials:", error);
     document.getElementById(
       "materialsList"
     ).innerHTML = `<p>Lỗi tải tài liệu: ${error.message}</p>`;
@@ -672,8 +611,7 @@ async function populateCoursesForMaterials() {
       dropdown.innerHTML = courses
         .map(
           (course) =>
-            `<option value="${course._id}">${
-              course.title || course.courseName || "Khóa học không tên"
+            `<option value="${course._id}">${course.title || course.courseName || "Khóa học không tên"
             }</option>`
         )
         .join("");
@@ -681,7 +619,6 @@ async function populateCoursesForMaterials() {
       dropdown.innerHTML = "<option value=''>Không có khóa học nào</option>";
     }
   } catch (error) {
-    console.error("Error loading courses for dropdown:", error);
   }
 }
 
@@ -703,11 +640,6 @@ async function handleMaterialUpload(e) {
       alert("Vui lòng chọn file để upload");
       return;
     }
-
-    console.log(`Uploading file for course: ${courseId}`);
-    console.log(`Description: ${description}`);
-    console.log(`File name: ${fileInput.files[0].name}`);
-
     const file = fileInput.files[0];
     const formData = new FormData();
     formData.append("file", file);
@@ -724,23 +656,17 @@ async function handleMaterialUpload(e) {
         body: formData,
       }
     );
-
-    console.log("Upload response status:", response.status);
-
     if (!response.ok) {
       let errorMessage = "Failed to upload material";
       try {
         const errorData = await response.json();
         errorMessage = errorData.error || errorMessage;
       } catch (e) {
-        console.error("Error parsing error response:", e);
       }
       throw new Error(errorMessage);
     }
 
     const result = await response.json();
-    console.log("Upload result:", result);
-
     alert("Tải lên tài liệu thành công!");
     closeModal("uploadFileModal");
     document.getElementById("uploadFileForm").reset();
@@ -748,7 +674,6 @@ async function handleMaterialUpload(e) {
     // Reload materials list
     loadCourseMaterials();
   } catch (error) {
-    console.error("Error uploading material:", error);
     alert(`Lỗi tải lên tài liệu: ${error.message}`);
   }
 }
@@ -790,33 +715,30 @@ async function loadCourseMaterials() {
             // Add course title and materials
             allMaterialsHTML += `
               <div class="course-materials">
-                <h3>${
-                  course.title || course.courseName || "Khóa học không tên"
-                }</h3>
+                <h3>${course.title || course.courseName || "Khóa học không tên"
+              }</h3>
                 <div class="materials-list">
                   ${materials
-                    .map(
-                      (material) => `
+                .map(
+                  (material) => `
                     <div class="file-item">
                       <div class="item-header">
                         <h4>${material.originalName}</h4>
                         <span>${new Date(
-                          material.uploadedAt
-                        ).toLocaleString()}</span>
+                    material.uploadedAt
+                  ).toLocaleString()}</span>
                       </div>
                       <p>${material.description || "Không có mô tả"}</p>
                       <div class="item-actions">
-                        <button class="btn btn-primary" onclick="downloadFile('${
-                          material._id
-                        }')">Tải xuống</button>
-                        <button class="btn btn-danger" onclick="deleteFile('${
-                          material._id
-                        }')">Xóa</button>
+                        <button class="btn btn-primary" onclick="downloadFile('${material._id
+                    }')">Tải xuống</button>
+                        <button class="btn btn-danger" onclick="deleteFile('${material._id
+                    }')">Xóa</button>
                       </div>
                     </div>
                   `
-                    )
-                    .join("")}
+                )
+                .join("")}
                 </div>
               </div>
             `;
@@ -838,7 +760,6 @@ async function loadCourseMaterials() {
         "<p>Chưa có tài liệu nào cho các khóa học của bạn.</p>";
     }
   } catch (error) {
-    console.error("Error loading course materials:", error);
     document.getElementById(
       "materials-content"
     ).innerHTML = `<p>Lỗi tải tài liệu: ${error.message}</p>`;
@@ -863,7 +784,6 @@ async function deleteFile(fileId) {
     alert("Xóa tài liệu thành công!");
     loadCourseMaterials();
   } catch (error) {
-    console.error("Error deleting file:", error);
     alert(`Lỗi xóa tài liệu: ${error.message}`);
   }
 }
@@ -962,7 +882,6 @@ async function loadAssignments() {
     await populateCoursesDropdown();
     await loadTeacherAssignments();
   } catch (error) {
-    console.error("Error setting up assignments tab:", error);
     document.getElementById(
       "assignments-tab"
     ).innerHTML = `<p>Lỗi tải bài tập: ${error.message}</p>`;
@@ -985,8 +904,7 @@ async function populateCoursesDropdown() {
       dropdown.innerHTML = courses
         .map(
           (course) =>
-            `<option value="${course._id}">${
-              course.title || course.courseName || "Khóa học không tên"
+            `<option value="${course._id}">${course.title || course.courseName || "Khóa học không tên"
             }</option>`
         )
         .join("");
@@ -994,7 +912,6 @@ async function populateCoursesDropdown() {
       dropdown.innerHTML = "<option value=''>Không có khóa học nào</option>";
     }
   } catch (error) {
-    console.error("Error loading courses for dropdown:", error);
   }
 }
 
@@ -1022,15 +939,12 @@ async function loadTeacherAssignments() {
         <div class="item-header">
           <h4>${assignment.title}</h4>
           <div class="item-actions">
-            <button class="btn btn-info" onclick="viewAssignmentSubmissions('${
-              assignment._id
-            }')">Xem bài nộp</button>
-            <button class="btn btn-primary" onclick="editAssignment('${
-              assignment._id
-            }')">Sửa</button>
-            <button class="btn btn-danger" onclick="deleteAssignment('${
-              assignment._id
-            }')">Xóa</button>
+            <button class="btn btn-info" onclick="viewAssignmentSubmissions('${assignment._id
+          }')">Xem bài nộp</button>
+            <button class="btn btn-primary" onclick="editAssignment('${assignment._id
+          }')">Sửa</button>
+            <button class="btn btn-danger" onclick="deleteAssignment('${assignment._id
+          }')">Xóa</button>
           </div>
         </div>
         <p>${assignment.description || ""}</p>
@@ -1050,7 +964,6 @@ async function loadTeacherAssignments() {
       )
       .join("");
   } catch (error) {
-    console.error("Error loading assignments:", error);
     document.getElementById(
       "assignmentsList"
     ).innerHTML = `<p>Lỗi tải bài tập: ${error.message}</p>`;
@@ -1105,15 +1018,6 @@ async function createAssignment(e) {
       return;
     }
 
-    console.log("Creating assignment:", {
-      courseId,
-      title,
-      description,
-      dueDate,
-      maxScore,
-      instructions,
-    });
-
     const assignmentData = {
       title,
       description,
@@ -1131,15 +1035,10 @@ async function createAssignment(e) {
       },
       body: JSON.stringify(assignmentData),
     });
-
-    console.log("Assignment creation response status:", response.status);
-
     let responseData;
     try {
       responseData = await response.json();
-      console.log("Response data:", responseData);
     } catch (jsonError) {
-      console.error("Error parsing response JSON:", jsonError);
       throw new Error("Server returned an invalid response");
     }
 
@@ -1152,7 +1051,6 @@ async function createAssignment(e) {
     closeModal("createAssignmentModal");
     loadTeacherAssignments();
   } catch (error) {
-    console.error("Error creating assignment:", error);
     alert(`Lỗi: ${error.message}`);
   }
 }
@@ -1187,7 +1085,6 @@ async function editAssignment(assignmentId) {
     // Show modal
     document.getElementById("editAssignmentModal").style.display = "block";
   } catch (error) {
-    console.error("Error loading assignment details:", error);
     alert(`Lỗi: ${error.message}`);
   }
 }
@@ -1227,7 +1124,6 @@ async function updateAssignment(e) {
     closeModal("editAssignmentModal");
     loadTeacherAssignments();
   } catch (error) {
-    console.error("Error updating assignment:", error);
     alert(`Lỗi: ${error.message}`);
   }
 }
@@ -1250,7 +1146,6 @@ async function deleteAssignment(assignmentId) {
     // Reload assignments
     loadTeacherAssignments();
   } catch (error) {
-    console.error("Error deleting assignment:", error);
     alert(`Lỗi: ${error.message}`);
   }
 }
@@ -1258,7 +1153,6 @@ async function deleteAssignment(assignmentId) {
 // View submissions for an assignment
 async function viewAssignmentSubmissions(assignmentId) {
   try {
-    console.log(`Loading submissions for assignment: ${assignmentId}`);
     const response = await fetch(`/assignments/${assignmentId}/submissions`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -1270,8 +1164,6 @@ async function viewAssignmentSubmissions(assignmentId) {
 
     // Lấy dữ liệu phản hồi
     const result = await response.json();
-    console.log("Submission response:", result);
-
     // Chuẩn bị modal để hiển thị kết quả
     document.getElementById("viewSubmissionsModal").style.display = "block";
     const container = document.getElementById("submissionsList");
@@ -1283,8 +1175,6 @@ async function viewAssignmentSubmissions(assignmentId) {
     }
 
     const submissions = result.submissions;
-    console.log(`Found ${submissions.length} submissions`);
-
     // Truy vấn thông tin tên học viên cho mỗi bài nộp
     const studentInfo = {};
     try {
@@ -1325,40 +1215,36 @@ async function viewAssignmentSubmissions(assignmentId) {
               <h5>Học viên: ${studentName}</h5>
               <p>${sub.content || "Không có nội dung"}</p>
               
-              ${
-                sub.fileUrls && sub.fileUrls.length
-                  ? `<div>
+              ${sub.fileUrls && sub.fileUrls.length
+            ? `<div>
                     <strong>File đính kèm:</strong>
                     <ul>
                       ${sub.fileUrls
-                        .map(
-                          (url) => `
+              .map(
+                (url) => `
                         <li><a href="${url}" target="_blank">${url
-                            .split("/")
-                            .pop()}</a></li>
+                    .split("/")
+                    .pop()}</a></li>
                       `
-                        )
-                        .join("")}
+              )
+              .join("")}
                     </ul>
                   </div>`
-                  : ""
-              }
+            : ""
+          }
               
               <div style="margin-top: 10px;">
-                <form onsubmit="gradeSubmission(event, '${assignmentId}', '${
-          sub.studentId
-        }')">
+                <form onsubmit="gradeSubmission(event, '${assignmentId}', '${sub.studentId
+          }')">
                   <div class="form-group">
                     <label>Điểm số:</label>
-                    <input type="number" class="form-control" name="grade" min="0" max="100" value="${
-                      sub.grade || 0
-                    }" style="width: 100px;">
+                    <input type="number" class="form-control" name="grade" min="0" max="100" value="${sub.grade || 0
+          }" style="width: 100px;">
                   </div>
                   <div class="form-group">
                     <label>Nhận xét:</label>
-                    <textarea class="form-control" name="feedback" rows="2">${
-                      sub.feedback || ""
-                    }</textarea>
+                    <textarea class="form-control" name="feedback" rows="2">${sub.feedback || ""
+          }</textarea>
                   </div>
                   <button type="submit" class="btn btn-primary">Chấm điểm</button>
                 </form>
@@ -1368,7 +1254,6 @@ async function viewAssignmentSubmissions(assignmentId) {
       })
       .join("");
   } catch (error) {
-    console.error("Error loading submissions:", error);
     alert(`Lỗi tải bài nộp: ${error.message}`);
   }
 }
@@ -1398,7 +1283,6 @@ async function gradeSubmission(e, assignmentId, studentId) {
 
     alert("Chấm điểm thành công!");
   } catch (error) {
-    console.error("Error grading submission:", error);
     alert(`Lỗi: ${error.message}`);
   }
 }
@@ -1407,18 +1291,11 @@ async function loadNotifications() {
   try {
     const container = document.getElementById("notificationsList");
     container.innerHTML = "<p>Đang tải thông báo...</p>";
-
-    console.log("DEBUG - Loading notifications");
-
     // Get last created notification ID if any
     const lastCreatedNotification = localStorage.getItem(
       "lastCreatedNotification"
     );
     if (lastCreatedNotification) {
-      console.log(
-        "DEBUG - Will highlight notification:",
-        lastCreatedNotification
-      );
       // Clear it immediately to avoid highlighting on subsequent loads
       localStorage.removeItem("lastCreatedNotification");
     }
@@ -1436,10 +1313,7 @@ async function loadNotifications() {
     if (!response.ok) throw new Error("Failed to load notifications");
 
     const notifications = await response.json();
-    console.log("DEBUG - Loaded notifications count:", notifications.length);
-
     if (notifications.length > 0) {
-      console.log("DEBUG - Most recent notification:", notifications[0]);
     }
 
     if (notifications.length === 0) {
@@ -1458,8 +1332,8 @@ async function loadNotifications() {
           notification.priority === "urgent"
             ? "text-danger"
             : notification.priority === "high"
-            ? "text-warning"
-            : "";
+              ? "text-warning"
+              : "";
 
         // Check if this is the newly created notification to highlight it
         const isNew =
@@ -1468,37 +1342,31 @@ async function loadNotifications() {
         const highlightClass = isNew ? "new-notification" : "";
 
         return `
-        <div class="notification-item ${highlightClass}" id="notification-${
-          notification._id
-        }">
+        <div class="notification-item ${highlightClass}" id="notification-${notification._id
+          }">
           <div class="item-header">
-            <h4 class="${priorityClass}">${notification.title} ${
-          isNew ? '<span class="badge bg-success">Mới</span>' : ""
-        }</h4>
+            <h4 class="${priorityClass}">${notification.title} ${isNew ? '<span class="badge bg-success">Mới</span>' : ""
+          }</h4>
             <span>${createdAt}</span>
           </div>
           <p>${notification.content}</p>
           <div class="item-info">
-            ${
-              notification.courseId
-                ? `<span class="badge bg-primary">Khóa học cụ thể</span>`
-                : `<span class="badge bg-success">Thông báo chung</span>`
-            }
-            ${
-              notification.priority === "urgent"
-                ? `<span class="badge bg-danger">Khẩn cấp</span>`
-                : notification.priority === "high"
-                ? `<span class="badge bg-warning">Quan trọng</span>`
-                : `<span class="badge bg-info">Thông thường</span>`
-            }
+            ${notification.courseId
+            ? `<span class="badge bg-primary">Khóa học cụ thể</span>`
+            : `<span class="badge bg-success">Thông báo chung</span>`
+          }
+            ${notification.priority === "urgent"
+            ? `<span class="badge bg-danger">Khẩn cấp</span>`
+            : notification.priority === "high"
+              ? `<span class="badge bg-warning">Quan trọng</span>`
+              : `<span class="badge bg-info">Thông thường</span>`
+          }
           </div>
           <div class="item-actions">
-            <button class="btn btn-primary" onclick="editNotification('${
-              notification._id
-            }')">Sửa</button>
-            <button class="btn btn-danger" onclick="deleteNotification('${
-              notification._id
-            }')">Xóa</button>
+            <button class="btn btn-primary" onclick="editNotification('${notification._id
+          }')">Sửa</button>
+            <button class="btn btn-danger" onclick="deleteNotification('${notification._id
+          }')">Xóa</button>
           </div>
         </div>
       `;
@@ -1534,7 +1402,6 @@ async function loadNotifications() {
       }, 500);
     }
   } catch (error) {
-    console.error("Error loading notifications:", error);
     document.getElementById(
       "notificationsList"
     ).innerHTML = `<p>Lỗi tải thông báo: ${error.message}</p>`;
@@ -1570,9 +1437,8 @@ async function viewStudents(courseId) {
           </div>
         </div>
         
-        <div class="pending-students" style="max-height: 400px; overflow-y: auto; border-radius: 8px; border: ${
-          pending.length > 0 ? "1px dashed #e74c3c" : "none"
-        }; padding: ${pending.length > 0 ? "10px" : "0"};">
+        <div class="pending-students" style="max-height: 400px; overflow-y: auto; border-radius: 8px; border: ${pending.length > 0 ? "1px dashed #e74c3c" : "none"
+      }; padding: ${pending.length > 0 ? "10px" : "0"};">
     `;
 
     if (pending.length === 0) {
@@ -1584,21 +1450,18 @@ async function viewStudents(courseId) {
         html += `
           <div class="student-item" style="background: #fff5f5; border-left: 4px solid #e74c3c; padding: 15px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
             <div>
-              <strong style="font-size: 15px;">${
-                s.name || s.fullName || "Học viên"
-              }</strong>
-              <div style="font-size: 12px; color: #666;">Email: ${
-                s.email || "Không có email"
-              }</div>
+              <strong style="font-size: 15px;">${s.name || s.fullName || "Học viên"
+          }</strong>
+              <div style="font-size: 12px; color: #666;">Email: ${s.email || "Không có email"
+          }</div>
               <div style="font-size: 11px; color: #999;">ID: ${s._id}</div>
             </div>
             <button class="btn" 
                     style="background: #2ecc71; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: all 0.2s ease;" 
                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)';"
                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';"
-                    onclick="approveStudent('${courseId}', '${s._id}', '${
-          s.name || s.fullName || "Học viên"
-        }')">
+                    onclick="approveStudent('${courseId}', '${s._id}', '${s.name || s.fullName || "Học viên"
+          }')">
               <i class="fas fa-check-circle"></i> Duyệt học viên
             </button>
           </div>
@@ -1635,12 +1498,10 @@ async function viewStudents(courseId) {
       approved.forEach((s) => {
         html += `
           <div class="student-item" style="background: #eafaf1; border-left: 4px solid #2ecc71; padding: 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-            <strong style="font-size: 15px;">${
-              s.name || s.fullName || "Học viên"
-            }</strong>
-            <div style="font-size: 12px; color: #666;">Email: ${
-              s.email || "Không có email"
-            }</div>
+            <strong style="font-size: 15px;">${s.name || s.fullName || "Học viên"
+          }</strong>
+            <div style="font-size: 12px; color: #666;">Email: ${s.email || "Không có email"
+          }</div>
             <div style="font-size: 11px; color: #999;">ID: ${s._id}</div>
           </div>
         `;
@@ -1663,7 +1524,6 @@ async function viewStudents(courseId) {
 
     container.innerHTML = html;
   } catch (err) {
-    console.error(err);
     container.innerHTML = `
       <div style="color: #e74c3c; padding: 15px; border: 1px solid #e74c3c; border-radius: 5px; background: #ffe9e8;">
         <strong>Lỗi:</strong> Không thể tải danh sách học viên. ${err.message}
@@ -1769,7 +1629,6 @@ async function approveStudent(courseId, studentId, studentName = "học viên") 
     pendingStudentsTotal--;
     updatePendingEnrollmentsUI();
   } catch (err) {
-    console.error(err);
     alert("Lỗi khi duyệt học viên: " + err.message);
   }
 }
@@ -1791,17 +1650,10 @@ async function createEnrollmentNotification(courseId, studentId) {
     });
 
     if (!notificationResponse.ok) {
-      console.error(
-        "Không thể tạo thông báo cho học viên:",
-        await notificationResponse.text()
-      );
       return false;
     }
-
-    console.log("Đã tạo thông báo duyệt đăng ký thành công");
     return true;
   } catch (error) {
-    console.error("Lỗi khi tạo thông báo enrollment:", error);
     return false;
   }
 }
@@ -1918,7 +1770,6 @@ createCourseForm.addEventListener("submit", (e) => {
     })
     .catch((err) => {
       alert("Lỗi khi tạo khóa học.");
-      console.error(err);
     });
 });
 
@@ -1976,7 +1827,6 @@ async function populateNotificationCourseDropdown() {
       select.appendChild(option);
     });
   } catch (error) {
-    console.error("Error loading courses for dropdown:", error);
   }
 }
 
@@ -2034,12 +1884,6 @@ async function createNotification(e) {
     } else {
       notificationData.isGlobal = true;
     }
-
-    console.log(
-      "DEBUG - Sending notification data:",
-      JSON.stringify(notificationData)
-    );
-
     const response = await fetch("/notifications", {
       method: "POST",
       headers: {
@@ -2055,8 +1899,6 @@ async function createNotification(e) {
     }
 
     const result = await response.json();
-    console.log("DEBUG - Notification created successfully:", result);
-
     alert("Thông báo đã được tạo thành công!");
     closeModal("createNotificationModal");
     document.getElementById("createNotificationForm").reset();
@@ -2070,7 +1912,6 @@ async function createNotification(e) {
     window.location.href =
       window.location.href.split("?")[0] + "?refresh=" + new Date().getTime();
   } catch (error) {
-    console.error("Error creating notification:", error);
     alert(`Lỗi tạo thông báo: ${error.message}`);
   }
 }
@@ -2087,7 +1928,6 @@ async function verifyCourseOwnership(courseId) {
     const course = await response.json();
     return course && course.teacherId === getUserIdFromToken();
   } catch (error) {
-    console.error("Error verifying course ownership:", error);
     return false;
   }
 }
@@ -2111,7 +1951,6 @@ function getUserIdFromToken() {
 
     return JSON.parse(jsonPayload)._id;
   } catch (e) {
-    console.error("Error decoding token:", e);
     return null;
   }
 }
@@ -2165,7 +2004,6 @@ async function editNotification(notificationId) {
     form.querySelector("button[type='submit']").textContent =
       "Cập nhật thông báo";
   } catch (error) {
-    console.error("Error loading notification for edit:", error);
     alert(`Lỗi tải thông báo: ${error.message}`);
   }
 }
@@ -2224,7 +2062,6 @@ async function updateNotification(e) {
     // Reload notifications
     loadNotifications();
   } catch (error) {
-    console.error("Error updating notification:", error);
     alert(`Lỗi cập nhật thông báo: ${error.message}`);
   }
 }
@@ -2262,7 +2099,6 @@ async function deleteNotification(notificationId) {
       container.innerHTML = "<p>Chưa có thông báo nào.</p>";
     }
   } catch (error) {
-    console.error("Error deleting notification:", error);
     alert(`Lỗi xóa thông báo: ${error.message}`);
   }
 }
@@ -2271,7 +2107,6 @@ async function deleteNotification(notificationId) {
 function initializeWebSocket() {
   // Check if WebSocket is supported
   if (!window.WebSocket) {
-    console.error("WebSocket is not supported by this browser");
     return;
   }
 
@@ -2283,7 +2118,6 @@ function initializeWebSocket() {
 
   // Connection opened
   socket.addEventListener("open", (event) => {
-    console.log("WebSocket connection established");
   });
 
   // Listen for messages
@@ -2294,21 +2128,17 @@ function initializeWebSocket() {
 
   // Connection closed
   socket.addEventListener("close", (event) => {
-    console.log("WebSocket connection closed");
     // Try to reconnect after 5 seconds
     setTimeout(initializeWebSocket, 5000);
   });
 
   // Connection error
   socket.addEventListener("error", (event) => {
-    console.error("WebSocket error:", event);
   });
 }
 
 // Handle WebSocket messages
 function handleWebSocketMessage(data) {
-  console.log("Received WebSocket message:", data);
-
   switch (data.type) {
     case "notification":
       // Show notification
@@ -2472,27 +2302,20 @@ async function editCourse(courseId) {
 
         row.innerHTML = `
           <select class="schedule-day form-control">
-            <option value="Thứ 2" ${
-              scheduleItem.day === "Thứ 2" ? "selected" : ""
-            }>Thứ 2</option>
-            <option value="Thứ 3" ${
-              scheduleItem.day === "Thứ 3" ? "selected" : ""
-            }>Thứ 3</option>
-            <option value="Thứ 4" ${
-              scheduleItem.day === "Thứ 4" ? "selected" : ""
-            }>Thứ 4</option>
-            <option value="Thứ 5" ${
-              scheduleItem.day === "Thứ 5" ? "selected" : ""
-            }>Thứ 5</option>
-            <option value="Thứ 6" ${
-              scheduleItem.day === "Thứ 6" ? "selected" : ""
-            }>Thứ 6</option>
-            <option value="Thứ 7" ${
-              scheduleItem.day === "Thứ 7" ? "selected" : ""
-            }>Thứ 7</option>
-            <option value="Chủ Nhật" ${
-              scheduleItem.day === "Chủ Nhật" ? "selected" : ""
-            }>Chủ Nhật</option>
+            <option value="Thứ 2" ${scheduleItem.day === "Thứ 2" ? "selected" : ""
+          }>Thứ 2</option>
+            <option value="Thứ 3" ${scheduleItem.day === "Thứ 3" ? "selected" : ""
+          }>Thứ 3</option>
+            <option value="Thứ 4" ${scheduleItem.day === "Thứ 4" ? "selected" : ""
+          }>Thứ 4</option>
+            <option value="Thứ 5" ${scheduleItem.day === "Thứ 5" ? "selected" : ""
+          }>Thứ 5</option>
+            <option value="Thứ 6" ${scheduleItem.day === "Thứ 6" ? "selected" : ""
+          }>Thứ 6</option>
+            <option value="Thứ 7" ${scheduleItem.day === "Thứ 7" ? "selected" : ""
+          }>Thứ 7</option>
+            <option value="Chủ Nhật" ${scheduleItem.day === "Chủ Nhật" ? "selected" : ""
+          }>Chủ Nhật</option>
           </select>
           <input type="time" class="schedule-start-time form-control" value="${startTime}" required />
           <span>-</span>
@@ -2524,7 +2347,6 @@ async function editCourse(courseId) {
     const form = document.getElementById("editCourseForm");
     form.onsubmit = updateCourse;
   } catch (error) {
-    console.error("Error loading course details:", error);
     alert("Không thể tải thông tin khóa học. Vui lòng thử lại.");
   }
 }
@@ -2589,7 +2411,6 @@ async function updateCourse(e) {
     closeModal("editCourseModal");
     loadCourses(); // Reload courses to show changes
   } catch (error) {
-    console.error("Error updating course:", error);
     alert(`Lỗi khi cập nhật khóa học: ${error.message}`);
   }
 }

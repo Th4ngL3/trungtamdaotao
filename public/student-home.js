@@ -18,33 +18,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Load user info
   try {
-    console.log("Initializing user info...");
     loadUserInfo();
   } catch (error) {
-    console.error("Error initializing user info:", error);
   }
 
   // Load unread notifications
   try {
-    console.log("Initializing notifications count...");
     loadUnreadNotifications();
   } catch (error) {
-    console.error("Error initializing notifications count:", error);
     // Set a default value
     unreadCountEl.textContent = "0";
   }
 
   // Show default tab
   try {
-    console.log("Setting up default tab...");
     showTab("courses");
   } catch (error) {
-    console.error("Error setting up default tab:", error);
   }
 
   // Setup form handlers
   try {
-    console.log("Setting up form handlers...");
     setupProfileForm();
     setupPasswordForm();
 
@@ -54,28 +47,20 @@ document.addEventListener("DOMContentLoaded", function () {
       submitForm.addEventListener("submit", handleAssignmentSubmit);
     }
   } catch (error) {
-    console.error("Error setting up forms:", error);
   }
 });
 
 // Load user info
 async function loadUserInfo() {
   try {
-    console.log("Loading user information...");
     studentNameEl.textContent = "Đang tải...";
 
     const response = await fetch("/users/me", {
       headers: { Authorization: `Bearer ${token}` },
     });
-
-    console.log("User info API response status:", response.status);
-
     if (!response.ok) {
-      console.error("Failed to load user info, status:", response.status);
-
       if (response.status === 401) {
         // Token invalid or expired - redirect to login
-        console.log("Authentication failed, redirecting to login");
         localStorage.removeItem("token");
         window.location.href = "/index.html";
         return;
@@ -87,25 +72,19 @@ async function loadUserInfo() {
 
     try {
       currentUser = await safeJsonParse(response);
-      console.log("User info loaded successfully");
-
       // Display user name
-      studentNameEl.textContent = `Xin chào, ${
-        currentUser.fullName || currentUser.name || "Học viên"
-      }`;
+      studentNameEl.textContent = `Xin chào, ${currentUser.fullName || currentUser.name || "Học viên"
+        }`;
 
       // Fill profile form if on profile tab
       if (currentTab === "profile") {
         fillProfileForm();
       }
     } catch (jsonError) {
-      console.error("Error parsing user info JSON:", jsonError);
       studentNameEl.textContent = "Học viên";
       throw jsonError;
     }
   } catch (error) {
-    console.error("Error in loadUserInfo:", error);
-
     // Don't automatically remove token and redirect unless it's an auth error
     // This allows the page to at least partially load with other content
     studentNameEl.textContent = "Học viên";
@@ -115,7 +94,6 @@ async function loadUserInfo() {
 // Tab management
 function showTab(tabName) {
   try {
-    console.log(`Switching to tab: ${tabName}`);
     currentTab = tabName;
 
     // Hide all tabs
@@ -131,7 +109,6 @@ function showTab(tabName) {
     // Show selected tab
     const tabElement = document.getElementById(`${tabName}-tab`);
     if (!tabElement) {
-      console.error(`Tab element not found: ${tabName}-tab`);
       return;
     }
     tabElement.classList.add("active");
@@ -166,7 +143,6 @@ function showTab(tabName) {
           break;
       }
     } catch (contentError) {
-      console.error(`Error loading content for tab ${tabName}:`, contentError);
       // Display error message in the tab content area
       const tabContent = document.getElementById(`${tabName}-tab`);
       if (tabContent) {
@@ -174,7 +150,6 @@ function showTab(tabName) {
       }
     }
   } catch (error) {
-    console.error("Error in showTab:", error);
   }
 }
 
@@ -192,7 +167,6 @@ function getTabDisplayName(tabName) {
 // Load my courses
 async function loadMyCourses() {
   try {
-    console.log("Đang tải khóa học của học viên...");
     const container = document.getElementById("myCourses");
     container.innerHTML = "<p>Đang tải khóa học...</p>";
 
@@ -202,10 +176,6 @@ async function loadMyCourses() {
     });
 
     if (!responseEnrolled.ok) {
-      console.error(
-        "API error (enrolled courses), status:",
-        responseEnrolled.status
-      );
       try {
         const errorData = await safeJsonParse(responseEnrolled);
         throw new Error(errorData.error || "Không thể tải khóa học");
@@ -220,10 +190,6 @@ async function loadMyCourses() {
     });
 
     if (!responseAllCourses.ok) {
-      console.error(
-        "API error (all courses), status:",
-        responseAllCourses.status
-      );
       try {
         const errorData = await safeJsonParse(responseAllCourses);
         throw new Error(errorData.error || "Không thể tải tất cả khóa học");
@@ -235,35 +201,8 @@ async function loadMyCourses() {
     const enrolledCourses = await safeJsonParse(responseEnrolled);
     const allCourses = await safeJsonParse(responseAllCourses);
 
-    console.log(
-      `Đã tải ${
-        enrolledCourses ? enrolledCourses.length : 0
-      } khóa học đã đăng ký`
-    );
-
-    // Debug log để kiểm tra khóa học đã đăng ký
-    if (enrolledCourses && enrolledCourses.length > 0) {
-      console.log(
-        "Khóa học đã đăng ký:",
-        JSON.stringify(
-          enrolledCourses.map((c) => ({
-            id: c._id,
-            name: c.courseName || c.title,
-            teacherId: c.teacherId,
-            students: Array.isArray(c.students)
-              ? c.students.length
-              : "không phải mảng",
-          })),
-          null,
-          2
-        )
-      );
-    }
-
     // Get current user ID from token
     const userId = currentUser._id || JSON.parse(atob(token.split(".")[1]))._id;
-    console.log("User ID hiện tại:", userId);
-
     // Find courses where the user is in pendingStudents
     const pendingCourses = allCourses.filter(
       (course) =>
@@ -273,9 +212,6 @@ async function loadMyCourses() {
           (id) => id === userId || id.toString() === userId.toString()
         )
     );
-
-    console.log(`Tìm thấy ${pendingCourses.length} khóa học đang chờ duyệt`);
-
     // If no courses at all, show empty state
     if (
       (!enrolledCourses || enrolledCourses.length === 0) &&
@@ -301,60 +237,48 @@ async function loadMyCourses() {
     if (enrolledCourses && enrolledCourses.length > 0) {
       enrolledCourses.forEach((course) => {
         html += `
-          <div class="course-item" onclick="viewCourseDetails('${
-            course._id
+          <div class="course-item" onclick="viewCourseDetails('${course._id
           }')" style="border-left: 4px solid #2ecc71;">
             <span class="status-badge status-approved">Đã duyệt</span>
-            <h4>${
-              course.courseName || course.title || "Khóa học không tên"
-            }</h4>
-            <p><strong>Giảng viên:</strong> ${
-              course.teacherName || "Không xác định"
-            }</p>
-            <p><strong>Thời gian:</strong> ${
-              course.startDate
-                ? new Date(course.startDate).toLocaleDateString("vi-VN")
-                : "N/A"
-            } - ${
-          course.endDate
+            <h4>${course.courseName || course.title || "Khóa học không tên"
+          }</h4>
+            <p><strong>Giảng viên:</strong> ${course.teacherName || "Không xác định"
+          }</p>
+            <p><strong>Thời gian:</strong> ${course.startDate
+            ? new Date(course.startDate).toLocaleDateString("vi-VN")
+            : "N/A"
+          } - ${course.endDate
             ? new Date(course.endDate).toLocaleDateString("vi-VN")
             : "N/A"
-        }</p>
-            <p><strong>Trạng thái:</strong> ${
-              course.isActive
-                ? '<span style="color: #2ecc71">Đang hoạt động</span>'
-                : '<span style="color: #e74c3c">Đã kết thúc</span>'
-            }</p>
+          }</p>
+            <p><strong>Trạng thái:</strong> ${course.isActive
+            ? '<span style="color: #2ecc71">Đang hoạt động</span>'
+            : '<span style="color: #e74c3c">Đã kết thúc</span>'
+          }</p>
           </div>
         `;
       });
     } else {
-      console.log("Không tìm thấy khóa học đã đăng ký");
     }
 
     // Add pending courses
     if (pendingCourses && pendingCourses.length > 0) {
       pendingCourses.forEach((course) => {
         html += `
-          <div class="course-item" onclick="viewCourseDetails('${
-            course._id
+          <div class="course-item" onclick="viewCourseDetails('${course._id
           }')" style="border-left: 4px solid #f39c12; background: #fffbf0;">
             <span class="status-badge status-pending">Chờ duyệt</span>
-            <h4>${
-              course.courseName || course.title || "Khóa học không tên"
-            }</h4>
-            <p><strong>Giảng viên:</strong> ${
-              course.teacherName || "Không xác định"
-            }</p>
-            <p><strong>Thời gian:</strong> ${
-              course.startDate
-                ? new Date(course.startDate).toLocaleDateString("vi-VN")
-                : "N/A"
-            } - ${
-          course.endDate
+            <h4>${course.courseName || course.title || "Khóa học không tên"
+          }</h4>
+            <p><strong>Giảng viên:</strong> ${course.teacherName || "Không xác định"
+          }</p>
+            <p><strong>Thời gian:</strong> ${course.startDate
+            ? new Date(course.startDate).toLocaleDateString("vi-VN")
+            : "N/A"
+          } - ${course.endDate
             ? new Date(course.endDate).toLocaleDateString("vi-VN")
             : "N/A"
-        }</p>
+          }</p>
             <p style="color: #f39c12; font-style: italic;">Đang chờ giảng viên duyệt</p>
           </div>
         `;
@@ -364,7 +288,6 @@ async function loadMyCourses() {
     html += "</div>";
     container.innerHTML = html;
   } catch (error) {
-    console.error("Lỗi tải khóa học:", error);
     document.getElementById("myCourses").innerHTML = `
       <div style="padding: 20px; background: #ffe9e8; border-radius: 8px; border-left: 5px solid #e74c3c;">
         <h4 style="color: #e74c3c;">Đã xảy ra lỗi</h4>
@@ -378,7 +301,6 @@ async function loadMyCourses() {
 // Load available courses
 async function loadAvailableCourses() {
   try {
-    console.log("Đang tải danh sách khóa học có sẵn...");
     const container = document.getElementById("availableCourses");
     container.innerHTML = "<p>Đang tải khóa học...</p>";
 
@@ -388,7 +310,6 @@ async function loadAvailableCourses() {
     });
 
     if (!allCoursesResponse.ok) {
-      console.error("API error, status:", allCoursesResponse.status);
       try {
         const errorData = await safeJsonParse(allCoursesResponse);
         throw new Error(errorData.error || "Không thể tải danh sách khóa học");
@@ -403,7 +324,6 @@ async function loadAvailableCourses() {
     });
 
     if (!myCoursesResponse.ok) {
-      console.error("API error, status:", myCoursesResponse.status);
       try {
         const errorData = await safeJsonParse(myCoursesResponse);
         throw new Error(errorData.error || "Không thể tải khóa học của bạn");
@@ -414,11 +334,6 @@ async function loadAvailableCourses() {
 
     const allCourses = await safeJsonParse(allCoursesResponse);
     const myCourses = await safeJsonParse(myCoursesResponse);
-
-    console.log(`Đã tải ${allCourses ? allCourses.length : 0} khóa học có sẵn`);
-    console.log(
-      `Đã tải ${myCourses ? myCourses.length : 0} khóa học đã đăng ký`
-    );
 
     // Filter out courses I'm already enrolled in
     const myCoursesIds = myCourses.map((course) => course._id);
@@ -438,9 +353,6 @@ async function loadAvailableCourses() {
             (id) => id === userId || id.toString() === userId.toString()
           )
         ) {
-          console.log(
-            `Course ${course.courseName} has pending enrollment, skipping`
-          );
           return false;
         }
       }
@@ -451,9 +363,6 @@ async function loadAvailableCourses() {
         course.maxStudents &&
         course.students.length >= course.maxStudents
       ) {
-        console.log(
-          `Course ${course.courseName} is full (${course.students.length}/${course.maxStudents}), skipping`
-        );
         return false;
       }
 
@@ -468,25 +377,20 @@ async function loadAvailableCourses() {
     container.innerHTML = '<div class="course-list">';
     availableCourses.forEach((course) => {
       container.innerHTML += `
-        <div class="course-item" onclick="viewAvailableCourseDetails('${
-          course._id
+        <div class="course-item" onclick="viewAvailableCourseDetails('${course._id
         }')" style="border-left: 4px solid #3498db;">
           <h4>${course.courseName || course.title || "Khóa học không tên"}</h4>
-          <p><strong>Giảng viên:</strong> ${
-            course.teacherName || "Không xác định"
-          }</p>
-          <p><strong>Thời gian:</strong> ${
-            course.startDate
-              ? new Date(course.startDate).toLocaleDateString("vi-VN")
-              : "N/A"
-          } - ${
-        course.endDate
+          <p><strong>Giảng viên:</strong> ${course.teacherName || "Không xác định"
+        }</p>
+          <p><strong>Thời gian:</strong> ${course.startDate
+          ? new Date(course.startDate).toLocaleDateString("vi-VN")
+          : "N/A"
+        } - ${course.endDate
           ? new Date(course.endDate).toLocaleDateString("vi-VN")
           : "N/A"
-      }</p>
-          <button class="register-button" onclick="event.stopPropagation(); registerForCourse('${
-            course._id
-          }')">
+        }</p>
+          <button class="register-button" onclick="event.stopPropagation(); registerForCourse('${course._id
+        }')">
             <i class="fas fa-plus-circle"></i> Đăng ký khóa học
           </button>
         </div>
@@ -494,7 +398,6 @@ async function loadAvailableCourses() {
     });
     container.innerHTML += "</div>";
   } catch (error) {
-    console.error("Lỗi tải khóa học có sẵn:", error);
     document.getElementById("availableCourses").innerHTML = `
       <div style="padding: 20px; background: #ffe9e8; border-radius: 8px; border-left: 5px solid #e74c3c;">
         <h4 style="color: #e74c3c;">Đã xảy ra lỗi</h4>
@@ -508,7 +411,6 @@ async function loadAvailableCourses() {
 // Load my assignments
 async function loadMyAssignments() {
   try {
-    console.log("Đang tải bài tập của học viên...");
     const container = document.getElementById("assignmentsList");
     container.innerHTML = "<p>Đang tải bài tập...</p>";
 
@@ -516,11 +418,7 @@ async function loadMyAssignments() {
     const coursesResponse = await fetch("/courses/student/my-courses", {
       headers: { Authorization: `Bearer ${token}` },
     });
-
-    console.log("Phản hồi từ API khóa học:", coursesResponse.status);
-
     if (!coursesResponse.ok) {
-      console.error("Course API error, status:", coursesResponse.status);
       try {
         const errorData = await safeJsonParse(coursesResponse);
         throw new Error(errorData.error || "Không thể tải khóa học");
@@ -530,8 +428,6 @@ async function loadMyAssignments() {
     }
 
     const courses = await safeJsonParse(coursesResponse);
-    console.log(`Đã tải ${courses ? courses.length : 0} khóa học`);
-
     if (!courses || courses.length === 0) {
       container.innerHTML = "<p>Bạn chưa có khóa học nào.</p>";
       return;
@@ -543,11 +439,8 @@ async function loadMyAssignments() {
     for (const course of courses) {
       try {
         if (!course._id) {
-          console.error("Khóa học không có ID:", course);
           continue;
         }
-
-        console.log(`Đang tải bài tập cho khóa học: ${course._id}`);
         const assignmentsResponse = await fetch(
           `/assignments/course/${course._id}`,
           {
@@ -558,10 +451,6 @@ async function loadMyAssignments() {
         if (assignmentsResponse.ok) {
           const assignments = await safeJsonParse(assignmentsResponse);
           if (assignments && Array.isArray(assignments)) {
-            console.log(
-              `Đã tải ${assignments.length} bài tập cho khóa học ${course._id}`
-            );
-
             allAssignments = allAssignments.concat(
               assignments.map((a) => ({
                 ...a,
@@ -571,28 +460,18 @@ async function loadMyAssignments() {
               }))
             );
           } else {
-            console.error("Invalid assignments data for course:", course._id);
           }
         } else {
-          console.error(
-            `Lỗi tải bài tập cho khóa học ${course._id}: ${assignmentsResponse.status}`
-          );
           try {
             const errorData = await safeJsonParse(assignmentsResponse).catch(
               () => ({})
             );
-            console.error("Chi tiết lỗi:", errorData);
           } catch (jsonError) {
-            console.error("Không thể phân tích dữ liệu lỗi");
           }
         }
       } catch (error) {
-        console.error(`Lỗi tải bài tập cho khóa học ${course._id}:`, error);
       }
     }
-
-    console.log(`Tổng số bài tập đã tải: ${allAssignments.length}`);
-
     if (allAssignments.length === 0) {
       container.innerHTML = "<p>Chưa có bài tập nào.</p>";
       return;
@@ -645,9 +524,8 @@ async function loadMyAssignments() {
           if (hasSubmission && mySubmission) {
             if (mySubmission.grade !== undefined) {
               statusClass = "status-graded";
-              statusText = `Đã chấm điểm: ${mySubmission.grade}/${
-                assignment.maxScore || 100
-              }`;
+              statusText = `Đã chấm điểm: ${mySubmission.grade}/${assignment.maxScore || 100
+                }`;
             } else {
               statusClass = "status-submitted";
               statusText = "Đã nộp";
@@ -660,37 +538,32 @@ async function loadMyAssignments() {
                 <h4>${assignment.title || "Bài tập không tên"}</h4>
                 <span class="assignment-status ${statusClass}">${statusText}</span>
               </div>
-              <p><strong>Khóa học:</strong> ${
-                assignment.courseName || "Không xác định"
-              }</p>
+              <p><strong>Khóa học:</strong> ${assignment.courseName || "Không xác định"
+            }</p>
               <p>${assignment.description || "Không có mô tả"}</p>
               <p><strong>Hạn nộp:</strong> ${dueDate.toLocaleString("vi-VN")} 
-                ${
-                  isOverdue && !hasSubmission
-                    ? '<span style="color: red;">(Đã quá hạn)</span>'
-                    : ""
-                }
+                ${isOverdue && !hasSubmission
+              ? '<span style="color: red;">(Đã quá hạn)</span>'
+              : ""
+            }
               </p>
               <div style="text-align: right; margin-top: 10px;">
-                <button class="btn btn-primary" onclick="viewAssignment('${
-                  assignment._id
-                }')">
+                <button class="btn btn-primary" onclick="viewAssignment('${assignment._id
+            }')">
                   Xem chi tiết
                 </button>
-                ${
-                  !hasSubmission
-                    ? `
+                ${!hasSubmission
+              ? `
                   <button class="btn btn-primary" onclick="submitAssignment('${assignment._id}')">
                     Nộp bài
                   </button>
                 `
-                    : ""
-                }
+              : ""
+            }
               </div>
             </div>
           `;
         } catch (itemError) {
-          console.error("Error rendering assignment item:", itemError);
           return `<div class="assignment-item">
             <p>Lỗi hiển thị bài tập</p>
           </div>`;
@@ -698,7 +571,6 @@ async function loadMyAssignments() {
       })
       .join("");
   } catch (error) {
-    console.error("Lỗi tải bài tập:", error);
     document.getElementById(
       "assignmentsList"
     ).innerHTML = `<p>Lỗi tải bài tập: ${error.message}</p>
@@ -709,26 +581,19 @@ async function loadMyAssignments() {
 // Load notifications
 async function loadNotifications() {
   try {
-    console.log("Đang tải thông báo...");
     const container = document.getElementById("notificationsList");
     container.innerHTML = "<p>Đang tải thông báo...</p>";
 
     const response = await fetch("/notifications/my-notifications", {
       headers: { Authorization: `Bearer ${token}` },
     });
-
-    console.log("Notification API response status:", response.status);
-
     if (!response.ok) {
-      console.error("Notification API error, status:", response.status);
       container.innerHTML = "<p>Lỗi tải thông báo. Vui lòng thử lại sau.</p>";
       return;
     }
 
     try {
       const notifications = await safeJsonParse(response);
-      console.log(`Loaded ${notifications.length} notifications`);
-
       if (!notifications || notifications.length === 0) {
         container.innerHTML = "<p>Không có thông báo nào.</p>";
         return;
@@ -745,33 +610,28 @@ async function loadNotifications() {
               ));
 
           return `
-          <div class="notification-item ${
-            isUnread ? "unread" : ""
-          }" onclick="markNotificationRead('${notification._id}')">
+          <div class="notification-item ${isUnread ? "unread" : ""
+            }" onclick="markNotificationRead('${notification._id}')">
             <div class="notification-header">
-              <h4 class="notification-title">${
-                notification.title || "Không có tiêu đề"
-              }</h4>
+              <h4 class="notification-title">${notification.title || "Không có tiêu đề"
+            }</h4>
               <span class="notification-time">${new Date(
-                notification.createdAt
-              ).toLocaleString("vi-VN")}</span>
+              notification.createdAt
+            ).toLocaleString("vi-VN")}</span>
             </div>
             <p>${notification.content || ""}</p>
-            ${
-              notification.priority === "urgent"
-                ? '<span class="badge badge-danger">Khẩn cấp</span>'
-                : ""
+            ${notification.priority === "urgent"
+              ? '<span class="badge badge-danger">Khẩn cấp</span>'
+              : ""
             }
           </div>
         `;
         })
         .join("");
     } catch (jsonError) {
-      console.error("Error parsing notification JSON:", jsonError);
       container.innerHTML = "<p>Lỗi xử lý dữ liệu thông báo.</p>";
     }
   } catch (error) {
-    console.error("Error loading notifications:", error);
     document.getElementById("notificationsList").innerHTML =
       "<p>Lỗi tải thông báo. Vui lòng thử lại sau.</p>";
   }
@@ -785,10 +645,6 @@ async function loadUnreadNotifications() {
     });
 
     if (!response.ok) {
-      console.log(
-        "Failed to load unread notifications, status:",
-        response.status
-      );
       // Set count to 0 and don't throw error to prevent page load failure
       unreadCountEl.textContent = "0";
       return;
@@ -798,11 +654,9 @@ async function loadUnreadNotifications() {
       const unreadNotifications = await safeJsonParse(response);
       unreadCountEl.textContent = unreadNotifications.length || "0";
     } catch (error) {
-      console.error("Error parsing unread notifications response:", error);
       unreadCountEl.textContent = "0";
     }
   } catch (error) {
-    console.error("Error loading unread notifications:", error);
     // Set count to 0 to prevent UI issues
     unreadCountEl.textContent = "0";
   }
@@ -811,60 +665,38 @@ async function loadUnreadNotifications() {
 // Mark notification as read
 async function markNotificationRead(notificationId) {
   try {
-    console.log(`Marking notification ${notificationId} as read...`);
-
     const response = await fetch(`/notifications/${notificationId}/read`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
 
     if (!response.ok) {
-      console.error(
-        `Failed to mark notification ${notificationId} as read, status:`,
-        response.status
-      );
       return;
     }
-
-    console.log(`Notification ${notificationId} marked as read successfully`);
-
     // Reload notifications and unread count
     loadNotifications();
     loadUnreadNotifications();
   } catch (error) {
-    console.error("Error marking notification as read:", error);
   }
 }
 
 // Mark all notifications as read
 async function markAllNotificationsRead() {
   try {
-    console.log("Marking all notifications as read...");
-
     const response = await fetch("/notifications/mark-all-read", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
 
     if (!response.ok) {
-      console.error(
-        "Failed to mark all notifications as read, status:",
-        response.status
-      );
-      alert(
-        "Không thể đánh dấu tất cả thông báo đã đọc. Vui lòng thử lại sau."
-      );
+      alert("Không thể đánh dấu tất cả thông báo đã đọc. Vui lòng thử lại sau.");
       return;
     }
-
-    console.log("All notifications marked as read successfully");
-
     // Reload notifications and unread count
     loadNotifications();
     loadUnreadNotifications();
     alert("Đã đánh dấu tất cả thông báo là đã đọc");
   } catch (error) {
-    console.error("Error marking all notifications as read:", error);
     alert("Lỗi đánh dấu thông báo");
   }
 }
@@ -915,14 +747,12 @@ function setupProfileForm() {
         if (response.ok) {
           alert("Cập nhật thông tin thành công!");
           currentUser = result.user;
-          studentNameEl.textContent = `Xin chào, ${
-            currentUser.fullName || currentUser.name || "Học viên"
-          }`;
+          studentNameEl.textContent = `Xin chào, ${currentUser.fullName || currentUser.name || "Học viên"
+            }`;
         } else {
           alert(result.error || "Lỗi cập nhật thông tin");
         }
       } catch (error) {
-        console.error("Error updating profile:", error);
         alert("Lỗi cập nhật thông tin");
       }
     });
@@ -966,7 +796,6 @@ function setupPasswordForm() {
           alert(result.error || "Lỗi đổi mật khẩu");
         }
       } catch (error) {
-        console.error("Error changing password:", error);
         alert("Lỗi đổi mật khẩu");
       }
     });
@@ -975,8 +804,6 @@ function setupPasswordForm() {
 // View assignment details
 async function viewAssignment(assignmentId) {
   try {
-    console.log(`Loading assignment details: ${assignmentId}`);
-
     // Show loading state
     document.getElementById("overlay").style.display = "block";
     document.getElementById("assignmentDetailModal").style.display = "block";
@@ -987,7 +814,6 @@ async function viewAssignment(assignmentId) {
     });
 
     if (!response.ok) {
-      console.error(`Assignment API error, status: ${response.status}`);
       throw new Error("Không thể tải thông tin bài tập");
     }
 
@@ -995,9 +821,6 @@ async function viewAssignment(assignmentId) {
     if (!assignment) {
       throw new Error("Không thể tải thông tin bài tập");
     }
-
-    console.log("Assignment details loaded");
-
     // Get my submission if any
     let submission = null;
     try {
@@ -1016,13 +839,10 @@ async function viewAssignment(assignmentId) {
           submissionData.submissions.length > 0
         ) {
           submission = submissionData.submissions[0];
-          console.log("Submission found:", submission);
         }
       } else {
-        console.log("No submission found or error getting submission");
       }
     } catch (submissionError) {
-      console.error("Error getting submission:", submissionError);
       // Continue without submission data
     }
 
@@ -1042,7 +862,6 @@ async function viewAssignment(assignmentId) {
           ? new Date(assignment.dueDate).toLocaleString("vi-VN")
           : "Không xác định";
     } catch (dateError) {
-      console.error("Error formatting due date:", dateError);
       document.getElementById("viewAssignmentDueDate").textContent =
         "Không xác định";
     }
@@ -1064,7 +883,6 @@ async function viewAssignment(assignmentId) {
             ? new Date(submission.submittedAt).toLocaleString("vi-VN")
             : "Không xác định";
       } catch (dateError) {
-        console.error("Error formatting submission date:", dateError);
         document.getElementById("submissionDate").textContent =
           "Không xác định";
       }
@@ -1095,9 +913,8 @@ async function viewAssignment(assignmentId) {
       const gradingInfoEl = document.getElementById("gradingInfo");
       if (submission.grade !== undefined) {
         gradingInfoEl.style.display = "block";
-        document.getElementById("submissionGrade").textContent = `${
-          submission.grade
-        }/${assignment.maxScore || 100}`;
+        document.getElementById("submissionGrade").textContent = `${submission.grade
+          }/${assignment.maxScore || 100}`;
         document.getElementById("submissionFeedback").textContent =
           submission.feedback || "Không có nhận xét";
       } else {
@@ -1116,8 +933,6 @@ async function viewAssignment(assignmentId) {
       }
     }
   } catch (error) {
-    console.error("Error viewing assignment:", error);
-
     // Display error in modal
     document.getElementById("viewAssignmentTitle").textContent =
       "Lỗi tải bài tập";
@@ -1160,7 +975,6 @@ function submitAssignment(assignmentId) {
       document.getElementById("assignmentSubmitModal").style.display = "block";
     })
     .catch((error) => {
-      console.error("Lỗi tải thông tin bài tập:", error);
       alert("Không thể tải thông tin bài tập: " + error.message);
     });
 }
@@ -1222,7 +1036,6 @@ async function handleAssignmentSubmit(e) {
     // Show success message
     alert("Nộp bài thành công!");
   } catch (error) {
-    console.error("Lỗi khi nộp bài:", error);
     alert("Lỗi khi nộp bài: " + error.message);
   }
 }
@@ -1277,10 +1090,8 @@ async function viewCourseDetails(courseId) {
           document.getElementById("courseTeacher").textContent =
             teacher.name || "Không xác định";
         } else {
-          console.log(`Teacher not found: ${course.teacherId}`);
         }
       } catch (error) {
-        console.error("Error fetching teacher info:", error);
       }
     } else {
       document.getElementById("courseTeacher").textContent = "Không xác định";
@@ -1372,7 +1183,6 @@ async function viewCourseDetails(courseId) {
     document.getElementById("overlay").style.display = "block";
     document.getElementById("courseDetailModal").style.display = "block";
   } catch (error) {
-    console.error("Error viewing course details:", error);
     alert("Không thể tải thông tin khóa học: " + error.message);
   }
 }
@@ -1396,11 +1206,8 @@ function logout() {
 // Global error handler to catch SOURCE_LANG_VI errors
 window.addEventListener("unhandledrejection", function (event) {
   // Check if it's the SOURCE_LANG_VI error
-  console.log("Unhandled promise rejection:", event.reason);
-
   if (event.reason && event.reason.error === "SOURCE_LANG_VI") {
     // This is the specific error we're trying to handle
-    console.log("Handling SOURCE_LANG_VI error");
     event.preventDefault(); // Prevent it from showing in console
   }
 });
@@ -1411,7 +1218,6 @@ async function safeJsonParse(response) {
     return await response.json();
   } catch (error) {
     if (error.message && error.message.includes("JSON")) {
-      console.error("Invalid JSON in API response:", error);
       throw new Error("Lỗi định dạng dữ liệu từ máy chủ");
     }
     throw error;
@@ -1435,13 +1241,10 @@ async function registerForCourse(courseId) {
     // Show confirmation dialog
     const confirmRegistration = confirm(
       `Xác nhận đăng ký khóa học: ${course.courseName || course.title}?\n\n` +
-        `Sau khi đăng ký, giảng viên sẽ xem xét và duyệt yêu cầu của bạn.`
+      `Sau khi đăng ký, giảng viên sẽ xem xét và duyệt yêu cầu của bạn.`
     );
 
     if (!confirmRegistration) return;
-
-    console.log(`Sending enrollment request for course: ${courseId}`);
-
     const response = await fetch(`/courses/${courseId}/enroll`, {
       method: "POST",
       headers: {
@@ -1450,13 +1253,8 @@ async function registerForCourse(courseId) {
       },
       body: JSON.stringify({ studentId: currentUser._id }),
     });
-
-    console.log(`Enrollment response status: ${response.status}`);
-
     // Log full response for debugging purposes
     const responseText = await response.text();
-    console.log("Raw response:", responseText);
-
     // Parse the response if it's JSON
     let errorMessage = "Không thể đăng ký khóa học";
     let errorData = null;
@@ -1469,7 +1267,6 @@ async function registerForCourse(courseId) {
         }
       }
     } catch (parseError) {
-      console.error("Failed to parse response as JSON:", parseError);
     }
 
     // Re-check if response was successful
@@ -1509,7 +1306,7 @@ async function registerForCourse(courseId) {
       // Show success message
       alert(
         errorData.message ||
-          "Đăng ký khóa học thành công! Vui lòng chờ giảng viên duyệt."
+        "Đăng ký khóa học thành công! Vui lòng chờ giảng viên duyệt."
       );
 
       // Reload both course lists
@@ -1531,7 +1328,6 @@ async function registerForCourse(courseId) {
     // Switch to my courses tab
     showTab("courses");
   } catch (error) {
-    console.error("Lỗi khi đăng ký khóa học:", error);
     alert("Lỗi khi đăng ký khóa học: " + (error.message || "Không xác định"));
   }
 }
@@ -1571,10 +1367,8 @@ async function viewAvailableCourseDetails(courseId) {
           document.getElementById("courseTeacher").textContent =
             teacher.name || "Không xác định";
         } else {
-          console.log(`Teacher not found: ${course.teacherId}`);
         }
       } catch (error) {
-        console.error("Error fetching teacher info:", error);
       }
     } else {
       document.getElementById("courseTeacher").textContent = "Không xác định";
@@ -1641,7 +1435,6 @@ async function viewAvailableCourseDetails(courseId) {
     document.getElementById("overlay").style.display = "block";
     document.getElementById("courseDetailModal").style.display = "block";
   } catch (error) {
-    console.error("Error viewing course details:", error);
     alert("Không thể tải thông tin khóa học: " + error.message);
   }
 }

@@ -1,0 +1,119 @@
+body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    table,th,td {
+      border: 1px solid #ccc;
+      border-collapse: collapse;
+      padding: 8px;
+    }
+
+    th {
+      background-color: #eee;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+ #courseList {
+      list-style: none;
+      padding: 0;
+    }
+
+    #courseList li {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+    }
+
+    #courseList h3 {
+      margin-top: 0;
+      color: #0056b3;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+    }
+
+    #courseList p {
+      margin: 8px 0;
+    }
+
+    .admin-actions {
+      margin-bottom: 20px;
+    }
+
+    .admin-actions button {
+      margin-right: 10px;
+      margin-bottom: 10px;
+      padding: 10px 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .admin-actions button:hover {
+      background: #0056b3;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    .form-group small {
+      color: #666;
+      font-size: 12px;
+    }
+
+    .file-item {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+    }
+
+    .file-item h4 {
+      margin: 0 0 10px 0;
+    }
+
+    .file-actions {
+      margin-top: 10px;
+    }
+
+    .file-actions button {
+      margin-right: 10px;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-download {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-delete {
+      background: #dc3545;
+      color: white;
+    }

@@ -1,6 +1,6 @@
 const { ObjectId } = require("mongodb");
 
-// Helper function to safely convert string to ObjectId
+// Chuyển chuỗi thành ObjectId
 function safeObjectId(id) {
   try {
     return typeof id === "string" ? new ObjectId(id) : id;
@@ -21,26 +21,11 @@ async function fileModel(db) {
         uploadedAt: new Date(),
       }),
 
-    // Lấy tất cả files
-    getAllFiles: () => files.find().sort({ uploadedAt: -1 }).toArray(),
-
-    // Lấy file theo ID
-    findById: (id) => files.findOne({ _id: safeObjectId(id) }),
-
     // Lấy files theo khóa học
     findByCourseId: (courseId) =>
       files
         .find({
           courseId: safeObjectId(courseId),
-        })
-        .sort({ uploadedAt: -1 })
-        .toArray(),
-
-    // Lấy files theo người upload
-    findByUploaderId: (uploaderId) =>
-      files
-        .find({
-          uploadedBy: uploaderId, // Keep as string for now
         })
         .sort({ uploadedAt: -1 })
         .toArray(),
@@ -83,33 +68,7 @@ async function fileModel(db) {
         });
     },
 
-    // Lấy files bài nộp
-    getSubmissionFiles: (assignmentId) =>
-      files
-        .find({
-          assignmentId: safeObjectId(assignmentId),
-          fileType: "assignment_submission",
-        })
-        .sort({ uploadedAt: -1 })
-        .toArray(),
 
-    // Lấy files bài nộp của student cụ thể
-    getStudentSubmissionFiles: (assignmentId, studentId) =>
-      files
-        .find({
-          assignmentId: safeObjectId(assignmentId),
-          uploadedBy: studentId, // Keep as string
-          fileType: "assignment_submission",
-        })
-        .sort({ uploadedAt: -1 })
-        .toArray(),
-
-    // Cập nhật thông tin file
-    updateFile: (id, updateData) =>
-      files.updateOne({ _id: safeObjectId(id) }, { $set: updateData }),
-
-    // Xóa file
-    deleteFile: (id) => files.deleteOne({ _id: safeObjectId(id) }),
 
     // Tăng số lượt download
     incrementDownloadCount: (id) =>
@@ -120,36 +79,6 @@ async function fileModel(db) {
           $set: { lastDownloaded: new Date() },
         }
       ),
-
-    // Lấy thống kê files
-    getFileStats: () =>
-      files
-        .aggregate([
-          {
-            $group: {
-              _id: "$fileType",
-              count: { $sum: 1 },
-              totalSize: { $sum: "$fileSize" },
-            },
-          },
-        ])
-        .toArray(),
-
-    // Tìm kiếm files
-    searchFiles: (searchTerm, courseId = null) => {
-      const query = {
-        $or: [
-          { fileName: { $regex: searchTerm, $options: "i" } },
-          { description: { $regex: searchTerm, $options: "i" } },
-        ],
-      };
-
-      if (courseId) {
-        query.courseId = safeObjectId(courseId);
-      }
-
-      return files.find(query).sort({ uploadedAt: -1 }).toArray();
-    },
   };
 }
 

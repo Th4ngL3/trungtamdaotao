@@ -1,40 +1,28 @@
-// Check for token and user on page load
+// Kiểm tra token và users khi tải trang
 let token = null;
 
 window.addEventListener("DOMContentLoaded", () => {
-  // Get token from localStorage
+  // nhận token từ localStorage
   token = localStorage.getItem("token");
 
   if (!token) {
-    console.error("No token found! Redirecting to login...");
     alert("Bạn cần đăng nhập lại để truy cập trang quản trị");
     window.location.href = "/index.html";
     return;
   }
 
-  // Check if user exists in localStorage
+  // Kiểm tra xem người dùng có tồn tại trong localStorage không
   const userStr = localStorage.getItem("user");
   if (userStr) {
     try {
       const user = JSON.parse(userStr);
-      console.log("User role from localStorage:", user.role);
 
-      // Verify user is admin
+      // Xác minh người dùng là admin
       if (user.role !== "admin") {
         alert("Bạn không có quyền truy cập trang quản trị");
         window.location.href = "/index.html";
         return;
       }
-
-      // Initialize page content
-      console.log("Admin authenticated, initializing page...");
-
-      // Automatically fetch courses on page load
-      setTimeout(() => {
-        fetchCourses();
-        // Also initialize other content if needed
-        // fetchUsers(); // Uncomment if you want to load users automatically
-      }, 500);
     } catch (e) {
       console.error("Error parsing user data:", e);
     }
@@ -76,7 +64,7 @@ async function createUser() {
   const res = await fetch("/users/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, password, role }), // ⚠️ backend cần hỗ trợ role
+    body: JSON.stringify({ name, email, password, role }),
   });
   const data = await res.json();
   alert(data.success ? "Tạo thành công" : "Thất bại");
@@ -119,10 +107,6 @@ async function showRoleUpdate(id, currentRole) {
 
 async function fetchCourses() {
   try {
-    console.log(
-      "Trying to fetch courses with token:",
-      token ? `${token.substring(0, 15)}...` : "No token"
-    );
 
     // First try the admin endpoint
     let res = await fetch("/admin/courses", {
@@ -131,23 +115,18 @@ async function fetchCourses() {
 
     // If the admin endpoint fails, try the public endpoint
     if (!res.ok) {
-      console.log("Admin courses endpoint failed, trying public endpoint");
       res = await fetch("/courses", {
         headers: { Authorization: `Bearer ${token}` },
       });
     }
 
-    console.log("Course API response status:", res.status);
-
     if (!res.ok) {
       const errorText = await res.text();
-      console.error("Error fetching courses:", errorText);
       alert(`Lỗi khi tải danh sách khóa học: ${res.status} - ${errorText}`);
       return;
     }
 
     const courses = await res.json();
-    console.log("Courses received:", courses);
 
     const ul = document.getElementById("courseList");
     ul.innerHTML = "";
@@ -162,8 +141,7 @@ async function fetchCourses() {
         // Add more details
         const details = document.createElement("div");
         details.innerHTML = `
-          <p><strong>Mô tả:</strong> ${
-            course.description || "Không có mô tả"
+          <p><strong>Mô tả:</strong> ${course.description || "Không có mô tả"
           }</p>
           <p><strong>Ngày bắt đầu:</strong> ${new Date(
             course.startDate
@@ -171,11 +149,9 @@ async function fetchCourses() {
           <p><strong>Ngày kết thúc:</strong> ${new Date(
             course.endDate
           ).toLocaleDateString()}</p>
-          <p><strong>Số học viên tối đa:</strong> ${
-            course.maxStudents || "Không giới hạn"
+          <p><strong>Số học viên tối đa:</strong> ${course.maxStudents || "Không giới hạn"
           }</p>
-          <p><strong>Số học viên đã đăng ký:</strong> ${
-            course.students ? course.students.length : 0
+          <p><strong>Số học viên đã đăng ký:</strong> ${course.students ? course.students.length : 0
           }</p>
         `;
         li.appendChild(details);
@@ -187,24 +163,23 @@ async function fetchCourses() {
 
     ul.classList.remove("hidden");
   } catch (error) {
-    console.error("Error in fetchCourses:", error);
     alert(`Lỗi tải danh sách khóa học: ${error.message}`);
   }
 }
 
-// Show upload student list form
+// Hiển thị biểu mẫu tải lên danh sách học sinh
 function showUploadStudentListForm() {
   document.getElementById("uploadStudentListForm").classList.remove("hidden");
   setupStudentListUploadForm();
 }
 
-// Hide upload student list form
+// Ẩn biểu mẫu tải lên danh sách học sinh
 function hideUploadStudentListForm() {
   document.getElementById("uploadStudentListForm").classList.add("hidden");
   document.getElementById("studentListUploadForm").reset();
 }
 
-// Setup student list upload form
+// Thiết lập biểu mẫu tải lên danh sách học sinh
 function setupStudentListUploadForm() {
   const form = document.getElementById("studentListUploadForm");
   form.onsubmit = async function (e) {
@@ -221,9 +196,6 @@ function setupStudentListUploadForm() {
     formData.append("file", fileInput.files[0]);
 
     try {
-      console.log("Uploading file:", fileInput.files[0].name);
-      console.log("File type:", fileInput.files[0].type);
-
       const response = await fetch("/files/upload/student-list", {
         method: "POST",
         headers: {
@@ -235,10 +207,8 @@ function setupStudentListUploadForm() {
       let result;
       try {
         const textResponse = await response.text();
-        console.log("Raw response:", textResponse);
         result = JSON.parse(textResponse);
       } catch (parseError) {
-        console.error("Error parsing response:", parseError);
         alert("Lỗi xử lý phản hồi từ server");
         return;
       }
@@ -251,13 +221,12 @@ function setupStudentListUploadForm() {
         alert(result.error || "Lỗi upload file");
       }
     } catch (error) {
-      console.error("Error uploading file:", error);
       alert("Lỗi upload file: " + error.message);
     }
   };
 }
 
-// View uploaded files
+// Xem tập tin đã tải lên 
 async function viewUploadedFiles() {
   try {
     const response = await fetch("/files/student-lists", {
@@ -287,11 +256,9 @@ async function viewUploadedFiles() {
           ).toLocaleString()}</p>
           <p><strong>Lượt tải:</strong> ${file.downloadCount || 0}</p>
           <div class="file-actions">
-            <button class="btn-download" onclick="downloadFile('${
-              file._id
+            <button class="btn-download" onclick="downloadFile('${file._id
             }')">Tải xuống</button>
-            <button class="btn-delete" onclick="deleteFile('${
-              file._id
+            <button class="btn-delete" onclick="deleteFile('${file._id
             }')">Xóa</button>
           </div>
         </div>
@@ -302,7 +269,6 @@ async function viewUploadedFiles() {
 
     uploadedFilesDiv.classList.remove("hidden");
   } catch (error) {
-    console.error("Error fetching files:", error);
     alert("Lỗi tải danh sách files");
   }
 }
@@ -338,7 +304,6 @@ async function downloadFile(fileId) {
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   } catch (error) {
-    console.error("Error downloading file:", error);
     alert("Lỗi tải file");
   }
 }
@@ -364,7 +329,6 @@ async function deleteFile(fileId) {
       alert(result.error || "Lỗi xóa file");
     }
   } catch (error) {
-    console.error("Error deleting file:", error);
     alert("Lỗi xóa file");
   }
 }

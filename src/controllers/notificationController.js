@@ -6,7 +6,7 @@ async function notificationController(fastify) {
   const courses = await require("../models/courseModel")(db);
 
   return {
-    // Middleware to verify if user has access to a notification
+    // Xác minh xem user có quyền truy cập vào thông báo này hay không 
     async verifyNotificationAccess(request, reply) {
       try {
         await fastify.authenticate(request, reply);

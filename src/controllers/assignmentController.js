@@ -1,25 +1,15 @@
 const { ObjectId } = require("mongodb");
 
 async function assignmentController(fastify) {
-  const assignments = await require("../models/assignmentModel")(
-    fastify.mongo.db
-  );
+  const assignments = await require("../models/assignmentModel")(fastify.mongo.db);
   const courses = await require("../models/courseModel")(fastify.mongo.db);
 
   return {
     // Tạo bài tập mới (Teacher)
     createAssignment: async (request, reply) => {
       try {
-        console.log("Create assignment called with body:", request.body);
 
         const teacherId = request.user._id;
-        console.log(
-          `Teacher ID from request.user: ${teacherId} (Type: ${typeof teacherId}, instanceof ObjectId: ${
-            teacherId instanceof ObjectId
-          })`
-        );
-        console.log(`Teacher ID as string: ${teacherId.toString()}`);
-
         const {
           title,
           description,
@@ -31,7 +21,6 @@ async function assignmentController(fastify) {
 
         // Validate required fields
         if (!title || !courseId || !dueDate) {
-          console.log("Missing required fields");
           return reply.code(400).send({
             error: "Thiếu thông tin bắt buộc: title, courseId, dueDate",
           });
@@ -41,76 +30,36 @@ async function assignmentController(fastify) {
         let courseObjectId;
         try {
           courseObjectId = new ObjectId(courseId);
-          console.log(`Course ID converted to ObjectId: ${courseObjectId}`);
         } catch (err) {
           console.error("Invalid course ID format:", courseId);
           return reply.code(400).send({ error: "Mã khóa học không hợp lệ" });
         }
 
-        console.log("Looking up course:", courseObjectId);
         // Kiểm tra khóa học tồn tại
         const course = await courses.findById(courseObjectId);
-        console.log("Raw course data:", JSON.stringify(course, null, 2));
 
         if (!course) {
-          console.log("Course not found:", courseObjectId);
           return reply.code(404).send({ error: "Không tìm thấy khóa học" });
-        }
-
-        console.log("Course found:", course._id);
-
-        // Debug all fields in course
-        console.log("Course fields:");
-        for (const [key, value] of Object.entries(course)) {
-          const valueType = typeof value;
-          const isObjectId = value instanceof ObjectId;
-          console.log(
-            `  ${key}: ${value} (Type: ${valueType}, isObjectId: ${isObjectId})`
-          );
         }
 
         // Kiểm tra quyền sở hữu khóa học
         let courseTeacherId = null;
         if (course.teacherId) {
           courseTeacherId =
-            typeof course.teacherId === "string"
-              ? course.teacherId
-              : course.teacherId.toString();
+            typeof course.teacherId === "string" ? course.teacherId : course.teacherId.toString();
         } else if (course.teacher) {
           courseTeacherId =
-            typeof course.teacher === "string"
-              ? course.teacher
-              : course.teacher.toString();
+            typeof course.teacher === "string" ? course.teacher : course.teacher.toString();
         }
 
         const currentTeacherId = teacherId ? teacherId.toString() : null;
 
-        console.log(
-          "Course teacherId:",
-          courseTeacherId,
-          "Type:",
-          typeof courseTeacherId
-        );
-        console.log(
-          "Current teacher id:",
-          currentTeacherId,
-          "Type:",
-          typeof currentTeacherId
-        );
-        console.log("Do they match?", courseTeacherId === currentTeacherId);
-
         if (!courseTeacherId) {
-          console.log("Course has no teacher ID");
-          return reply
-            .code(403)
-            .send({ error: "Khóa học không có giảng viên" });
+          return reply.code(403).send({ error: "Khóa học không có giảng viên" });
         }
 
         if (courseTeacherId !== currentTeacherId) {
-          console.log("Teacher doesn't own this course");
-          return reply
-            .code(403)
-            .send({ error: "Bạn không có quyền tạo bài tập cho khóa học này" });
+          return reply.code(403).send({ error: "Bạn không có quyền tạo bài tập cho khóa học này" });
         }
 
         const assignmentData = {
@@ -125,14 +74,8 @@ async function assignmentController(fastify) {
           isActive: true,
         };
 
-        console.log("Creating assignment with data:", {
-          title: assignmentData.title,
-          courseId: assignmentData.courseId,
-          dueDate: assignmentData.dueDate,
-        });
 
         const result = await assignments.createAssignment(assignmentData);
-        console.log("Assignment created with ID:", result.insertedId);
 
         reply.send({
           success: true,
@@ -155,17 +98,13 @@ async function assignmentController(fastify) {
         // Kiểm tra quyền sở hữu
         const assignment = await assignments.findById(id);
         if (!assignment || assignment.teacherId.toString() !== teacherId) {
-          return reply
-            .code(403)
-            .send({ error: "Bạn không có quyền chỉnh sửa bài tập này" });
+          return reply.code(403).send({ error: "Bạn không có quyền chỉnh sửa bài tập này" });
         }
 
         await assignments.updateAssignment(id, updateData);
         reply.send({ success: true, message: "Cập nhật bài tập thành công" });
       } catch (error) {
-        reply
-          .code(500)
-          .send({ error: "Lỗi cập nhật bài tập: " + error.message });
+        reply.code(500).send({ error: "Lỗi cập nhật bài tập: " + error.message });
       }
     },
 
@@ -178,9 +117,7 @@ async function assignmentController(fastify) {
         // Kiểm tra quyền sở hữu
         const assignment = await assignments.findById(id);
         if (!assignment || assignment.teacherId.toString() !== teacherId) {
-          return reply
-            .code(403)
-            .send({ error: "Bạn không có quyền xóa bài tập này" });
+          return reply.code(403).send({ error: "Bạn không có quyền xóa bài tập này" });
         }
 
         await assignments.deleteAssignment(id);
@@ -197,9 +134,7 @@ async function assignmentController(fastify) {
         const teacherAssignments = await assignments.findByTeacherId(teacherId);
 
         // Lấy thông tin courses để thêm tên khóa học vào bài tập
-        const courseIds = [
-          ...new Set(teacherAssignments.map((a) => a.courseId.toString())),
-        ];
+        const courseIds = [...new Set(teacherAssignments.map((a) => a.courseId.toString())),];
         const coursesData = {};
 
         for (const courseId of courseIds) {
@@ -217,17 +152,13 @@ async function assignmentController(fastify) {
           const courseId = assignment.courseId.toString();
           return {
             ...assignment,
-            courseName: coursesData[courseId]
-              ? coursesData[courseId].name
-              : "Khóa học không xác định",
+            courseName: coursesData[courseId] ? coursesData[courseId].name : "Khóa học không xác định",
           };
         });
 
         reply.send(enhancedAssignments);
       } catch (error) {
-        reply
-          .code(500)
-          .send({ error: "Lỗi lấy bài tập của giảng viên: " + error.message });
+        reply.code(500).send({ error: "Lỗi lấy bài tập của giảng viên: " + error.message });
       }
     },
 
@@ -247,9 +178,7 @@ async function assignmentController(fastify) {
           (s) => s.studentId.toString() === studentId
         );
         if (!isEnrolled) {
-          return reply
-            .code(403)
-            .send({ error: "Bạn chưa đăng ký khóa học này" });
+          return reply.code(403).send({ error: "Bạn chưa đăng ký khóa học này" });
         }
 
         const courseAssignments = await assignments.findByCourseId(courseId);
@@ -263,9 +192,7 @@ async function assignmentController(fastify) {
 
         reply.send(enhancedAssignments);
       } catch (error) {
-        reply
-          .code(500)
-          .send({ error: "Lỗi lấy bài tập khóa học: " + error.message });
+        reply.code(500).send({ error: "Lỗi lấy bài tập khóa học: " + error.message });
       }
     },
 
@@ -290,9 +217,7 @@ async function assignmentController(fastify) {
 
         reply.send(assignment);
       } catch (error) {
-        reply
-          .code(500)
-          .send({ error: "Lỗi lấy thông tin bài tập: " + error.message });
+        reply.code(500).send({ error: "Lỗi lấy thông tin bài tập: " + error.message });
       }
     },
 
@@ -340,34 +265,23 @@ async function assignmentController(fastify) {
         const { id } = request.params;
         const studentId = request.user._id;
 
-        console.log(
-          `Getting submission for assignment ${id} by student ${studentId}`
-        );
-
         // Kiểm tra bài tập tồn tại
         const assignment = await assignments.findById(id);
         if (!assignment) {
-          console.log("Assignment not found");
           return reply.code(404).send({ error: "Không tìm thấy bài tập" });
         }
 
         // Tìm bài nộp của học viên
-        const submission = await assignments.getStudentSubmission(
-          id,
-          studentId
-        );
+        const submission = await assignments.getStudentSubmission(id, studentId);
 
         if (!submission) {
-          console.log("No submission found");
           return reply.code(404).send({ error: "Bạn chưa nộp bài tập này" });
         }
 
         reply.send(submission);
       } catch (error) {
         console.error("Error getting student submission:", error);
-        reply
-          .code(500)
-          .send({ error: "Lỗi lấy bài nộp của học viên: " + error.message });
+        reply.code(500).send({ error: "Lỗi lấy bài nộp của học viên: " + error.message });
       }
     },
 
@@ -377,30 +291,20 @@ async function assignmentController(fastify) {
         const { id } = request.params;
         const teacherId = request.user._id;
 
-        console.log(
-          `Getting submissions for assignment: ${id}, requested by teacher: ${teacherId}`
-        );
-
         // Kiểm tra quyền
         const assignment = await assignments.findById(id);
         if (!assignment) {
-          console.log(`Assignment not found: ${id}`);
           return reply.code(404).send({ error: "Không tìm thấy bài tập" });
         }
 
         if (assignment.teacherId.toString() !== teacherId.toString()) {
-          console.log(
-            `Teacher ${teacherId} doesn't have permission for assignment ${id} with teacher ${assignment.teacherId}`
-          );
-          return reply
-            .code(403)
-            .send({ error: "Bạn không có quyền xem bài nộp" });
+
+          return reply.code(403).send({ error: "Bạn không có quyền xem bài nộp" });
         }
 
         // Lấy thông tin bài nộp
         const submissionData = await assignments.getAllSubmissions(id);
         if (!submissionData || !submissionData.submissions) {
-          console.log("No submissions found");
           return reply.send({
             title: assignment.title,
             description: assignment.description,
@@ -414,29 +318,30 @@ async function assignmentController(fastify) {
 
         try {
           for (const studentId of studentIds) {
-            // Tìm trong bảng users trước
-            const user = await db
-              .collection("users")
-              .findOne({ _id: studentId });
+            if (!studentId) continue;
 
-            if (user) {
-              studentMap[studentId.toString()] = {
-                name: user.fullName || user.name || "Học viên không xác định",
-                email: user.email,
-              };
-            } else {
-              // Nếu không tìm thấy, tìm trong bảng students
-              const student = await db
-                .collection("students")
-                .findOne({ _id: studentId });
-              if (student) {
+            try {
+              const user = await fastify.mongo.db.collection("users").findOne({ _id: studentId });
+
+              if (user) {
                 studentMap[studentId.toString()] = {
-                  name: student.name || "Học viên không xác định",
-                  email: student.email,
+                  name: user.fullName || user.name || "Học viên không xác định",
+                  email: user.email,
                 };
+              } else {
+                const student = await fastify.mongo.db.collection("students").findOne({ _id: studentId });
+                if (student) {
+                  studentMap[studentId.toString()] = {
+                    name: student.name || "Học viên không xác định",
+                    email: student.email,
+                  };
+                }
               }
+            } catch (err) {
+              console.error(`Không thể chuyển studentId thành ObjectId: ${studentId}`, err);
             }
           }
+
         } catch (studentError) {
           console.error("Error fetching student information:", studentError);
         }
@@ -450,8 +355,6 @@ async function assignmentController(fastify) {
             studentEmail: studentInfo.email || "",
           };
         });
-
-        console.log(`Returning ${enhancedSubmissions.length} submissions`);
 
         reply.send({
           title: submissionData.title,
@@ -474,27 +377,13 @@ async function assignmentController(fastify) {
         // Kiểm tra quyền
         const assignment = await assignments.findById(id);
         if (!assignment || assignment.teacherId.toString() !== teacherId) {
-          return reply
-            .code(403)
-            .send({ error: "Bạn không có quyền chấm điểm" });
+          return reply.code(403).send({ error: "Bạn không có quyền chấm điểm" });
         }
 
         await assignments.gradeSubmission(id, studentId, grade, feedback);
         reply.send({ success: true, message: "Chấm điểm thành công" });
       } catch (error) {
         reply.code(500).send({ error: "Lỗi chấm điểm: " + error.message });
-      }
-    },
-
-    // Lấy tất cả bài tập (Admin)
-    getAllAssignments: async (request, reply) => {
-      try {
-        const allAssignments = await assignments.getAllAssignments();
-        reply.send(allAssignments);
-      } catch (error) {
-        reply
-          .code(500)
-          .send({ error: "Lỗi lấy danh sách bài tập: " + error.message });
       }
     },
   };

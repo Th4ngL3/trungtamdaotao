@@ -1,0 +1,362 @@
+body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+      }
+
+      header {
+        background-color: #343a40;
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .course-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+      }
+
+      .course-item {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        border-left: 5px solid #007bff;
+      }
+
+      .course-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .course-item h4 {
+        margin-top: 0;
+        color: #007bff;
+        font-size: 18px;
+      }
+
+      .course-item .btn {
+        margin-top: 15px;
+      }
+
+      .course-price {
+        font-weight: bold;
+        color: #28a745;
+        font-size: 16px;
+      }
+
+      .register-button {
+        margin-top: 15px;
+        width: 100%;
+        padding: 10px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .register-button i {
+        margin-right: 8px;
+      }
+
+      .register-button:hover {
+        background-color: #218838;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      #courseDetailModal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 20px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        display: none;
+        z-index: 10;
+      }
+
+      #courseDetailModal h3 {
+        margin-top: 0;
+      }
+
+      .modal-footer {
+        margin-top: 20px;
+        text-align: right;
+      }
+
+      .btn {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-left: 10px;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.3s ease;
+      }
+
+      .btn i {
+        margin-right: 5px;
+      }
+
+      .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+      }
+
+      .btn-primary {
+        background-color: #007bff;
+        color: white;
+      }
+
+      .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+      }
+
+      .btn-danger {
+        background-color: #dc3545;
+        color: white;
+      }
+
+      .btn-success {
+        background-color: #28a745;
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn-success:hover {
+        background-color: #218838;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        z-index: 5;
+      }
+
+      /* Tab styles */
+      .tab-container {
+        display: flex;
+        border-bottom: 2px solid #ddd;
+        margin-bottom: 20px;
+      }
+
+      .tab-btn {
+        padding: 10px 20px;
+        border: none;
+        background: #f8f9fa;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s;
+      }
+
+      .tab-btn.active {
+        background: #007bff;
+        color: white;
+        border-bottom-color: #0056b3;
+      }
+
+      .tab-content {
+        padding: 20px;
+      }
+
+      .tab-pane {
+        display: none;
+      }
+
+      .tab-pane.active {
+        display: block;
+      }
+
+      /* Form styles */
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+
+      /* Assignment styles */
+      .assignment-item {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+      }
+
+      .assignment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .assignment-status {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .status-pending {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .status-submitted {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .status-graded {
+        background: #cce5ff;
+        color: #004085;
+      }
+
+      /* Notification styles */
+      .notification-item {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        position: relative;
+      }
+
+      .notification-item.unread {
+        background: #e3f2fd;
+        border-color: #2196f3;
+      }
+
+      .notification-item.unread::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: #2196f3;
+        border-radius: 4px 0 0 4px;
+      }
+
+      .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .notification-title {
+        font-weight: bold;
+        margin: 0;
+      }
+
+      .notification-time {
+        font-size: 12px;
+        color: #666;
+      }
+
+      .notifications-actions {
+        margin-bottom: 20px;
+      }
+
+      /* Payment styles */
+      .payment-info {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 15px 0;
+        border-left: 5px solid #28a745;
+      }
+
+      .payment-methods {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .payment-method-btn {
+        padding: 8px 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+      }
+
+      .payment-method-btn i {
+        margin-right: 8px;
+      }
+
+      .payment-method-btn:hover {
+        background-color: #e9ecef;
+        transform: translateY(-2px);
+      }
+
+      .payment-method-btn.active {
+        background-color: #28a745;
+        color: white;
+        border-color: #28a745;
+      }
+
+      .banking-info {
+        background-color: #e9ecef;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+      }
+
+      .banking-info p {
+        margin: 5px 0;
+      }
+
+      #paymentModal h3 {
+        margin-top: 0;
+        color: #28a745;
+        border-bottom: 2px solid #28a745;
+        padding-bottom: 10px;
+      }

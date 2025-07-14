@@ -14,9 +14,6 @@ async function assignmentRoutes(fastify, options) {
   fastify.get('/:id', { preValidation: [fastify.authenticate] }, controller.getAssignmentById);
   fastify.post('/:id/submit', { preValidation: [fastify.authenticate] }, controller.submitAssignment);
   fastify.get('/:id/my-submission', { preValidation: [fastify.authenticate] }, controller.getMySubmission);
-
-  // Admin routes
-  fastify.get('/', { preValidation: [fastify.isAdmin] }, controller.getAllAssignments);
 }
 
 module.exports = assignmentRoutes;

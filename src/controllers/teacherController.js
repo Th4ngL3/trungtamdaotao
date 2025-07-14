@@ -34,12 +34,10 @@ module.exports = (fastify) => {
 
         if (user.role !== "teacher") {
           console.error("User is not a teacher:", userId, "Role:", user.role);
-          return reply
-            .code(403)
-            .send({ error: "Chỉ giảng viên được phép truy cập" });
+          return reply.code(403).send({ error: "Chỉ giảng viên được phép truy cập" });
         }
 
-        // Set user info in the request for later use
+        // Đặt thông tin người dùng trong request
         request.user = user;
       } catch (error) {
         console.error("Error converting userId to ObjectId:", error);
@@ -47,9 +45,7 @@ module.exports = (fastify) => {
       }
     } catch (error) {
       console.error("Error in isTeacher middleware:", error);
-      return reply
-        .code(401)
-        .send({ error: "Token không hợp lệ hoặc đã hết hạn" });
+      return reply.code(401).send({ error: "Token không hợp lệ hoặc đã hết hạn" });
     }
   }
 
@@ -124,14 +120,7 @@ module.exports = (fastify) => {
           meetLink,
         } = request.body;
 
-        if (
-          !title ||
-          !description ||
-          !schedule ||
-          !startDate ||
-          !endDate ||
-          !meetLink
-        ) {
+        if (!title || !description || !schedule || !startDate || !endDate || !meetLink) {
           return reply.code(400).send({ error: "Thiếu thông tin khóa học" });
         }
 
@@ -183,9 +172,7 @@ module.exports = (fastify) => {
         // Convert studentId từ string sang ObjectId để so sánh
         const sid = new ObjectId(studentId);
         if (!course.pendingStudents?.some((id) => id.equals(sid))) {
-          return reply
-            .code(400)
-            .send({ error: "Học viên chưa đăng ký hoặc đã được duyệt" });
+          return reply.code(400).send({ error: "Học viên chưa đăng ký hoặc đã được duyệt" });
         }
 
         // Thêm dữ liệu học viên với đầy đủ thông tin cần thiết
@@ -237,15 +224,9 @@ module.exports = (fastify) => {
         console.log("Pending students:", pendingStudentIds.length);
         console.log("Approved students:", approvedStudentIds.length);
 
-        const pending = await users
-          .find({ _id: { $in: pendingStudentIds } })
-          .project({ _id: 1, name: 1 })
-          .toArray();
+        const pending = await users.find({ _id: { $in: pendingStudentIds } }).project({ _id: 1, name: 1 }).toArray();
 
-        const approved = await users
-          .find({ _id: { $in: approvedStudentIds } })
-          .project({ _id: 1, name: 1 })
-          .toArray();
+        const approved = await users.find({ _id: { $in: approvedStudentIds } }).project({ _id: 1, name: 1 }).toArray();
 
         reply.send({ pendingStudents: pending, approvedStudents: approved });
       } catch (error) {
@@ -274,9 +255,7 @@ module.exports = (fastify) => {
         });
 
         if (!course) {
-          return reply
-            .code(404)
-            .send({
+          return reply.code(404).send({
               error: "Không tìm thấy khóa học hoặc bạn không có quyền truy cập",
             });
         }
@@ -302,20 +281,14 @@ module.exports = (fastify) => {
           maxStudents,
         } = request.body;
 
-        if (
-          !title ||
-          !description ||
-          !schedule ||
-          !startDate ||
-          !endDate ||
-          !meetLink
+        if (!title || !description || !schedule || !startDate || !endDate || !meetLink
         ) {
           return reply.code(400).send({ error: "Thiếu thông tin khóa học" });
         }
 
         console.log("Updating course for ID:", courseId);
 
-        // Check if course exists and belongs to this teacher
+        // Kiểm tra xem khóa học có tồn tại và thuộc về giáo viên này không
         const course = await courses.findOne({
           _id: new ObjectId(courseId),
           teacher: new ObjectId(request.user._id),
@@ -327,7 +300,6 @@ module.exports = (fastify) => {
           });
         }
 
-        // Prepare update data
         const updateData = {
           title,
           description,
@@ -339,12 +311,10 @@ module.exports = (fastify) => {
           updatedAt: new Date(),
         };
 
-        // Add maxStudents if provided
         if (maxStudents) {
           updateData.maxStudents = parseInt(maxStudents);
         }
 
-        // Update the course
         const result = await courses.updateOne(
           { _id: new ObjectId(courseId) },
           { $set: updateData }
